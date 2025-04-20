@@ -24,19 +24,19 @@ const onboardingData: OnboardingItem[] = [
     id: "1",
     title: "Find Your Dream Job",
     description: "Discover thousands of job opportunities with all the information you need.",
-    image: require("../../../assets/images/onboarding1.png"),
+    image: require("../../../assets/images/onboarding1.jpg"),
   },
   {
     id: "2",
     title: "Hire Top Talent",
     description: "Connect with freelancers and professionals around the world.",
-    image: require("../../../assets/images/onboarding1.png"),
+    image: require("../../../assets/images/onboarding2.jpg"),
   },
   {
     id: "3",
     title: "Get Started Today",
     description: "Start your journey with us today and find your perfect match.",
-    image: require("../../../assets/images/onboarding1.png"),
+    image: require("../../../assets/images/onboarding3.jpg"),
   },
 ]
 
@@ -80,7 +80,6 @@ const OnboardingScreen = () => {
           <Text style={[styles.skipText, { color: theme.primary }]}>Skip</Text>
         </TouchableOpacity>
       </View>
-
       <FlatList
         data={onboardingData}
         renderItem={renderItem}
@@ -94,7 +93,6 @@ const OnboardingScreen = () => {
         viewabilityConfig={viewConfig}
         ref={slidesRef}
       />
-
       <View style={styles.indicatorContainer}>
         {onboardingData.map((_, index) => {
           const inputRange = [(index - 1) * width, index * width, (index + 1) * width]
@@ -129,7 +127,6 @@ const OnboardingScreen = () => {
 
       <View style={styles.buttonContainer}>
         <Button title={currentIndex === onboardingData.length - 1 ? "Get Started" : "Next"} onPress={scrollTo} />
-
         {currentIndex === onboardingData.length - 1 && (
           <TouchableOpacity
             style={[styles.loginButton, { borderColor: theme.primary }]}
@@ -198,7 +195,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "80%",
-    marginBottom: 50,
+    marginBottom: 30,
   },
   loginButton: {
     marginTop: 15,

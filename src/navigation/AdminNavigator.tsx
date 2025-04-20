@@ -4,7 +4,6 @@ import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons, MaterialIcons } from "@expo/vector-icons"
 import { useTheme } from "../contexts/ThemeContext"
 
-// Screens
 import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen"
 import AdminUsersScreen from "../screens/admin/AdminUsersScreen"
 import AdminJobsScreen from "../screens/admin/AdminJobsScreen"
@@ -14,7 +13,6 @@ import UserDetailsScreen from "../screens/admin/UserDetailsScreen"
 import JobDetailsScreen from "../screens/admin/JobDetailsScreen"
 import ReportDetailsScreen from "../screens/admin/ReportDetailsScreen"
 
-// Stack param lists
 export type AdminStackParamList = {
   AdminTabs: undefined
   UserDetails: { userId: string }
@@ -34,7 +32,6 @@ export type AdminTabParamList = {
 const Stack = createStackNavigator<AdminStackParamList>()
 const Tab = createBottomTabNavigator<AdminTabParamList>()
 
-// Tab Navigator
 const AdminTabNavigator = () => {
   const { theme } = useTheme()
 

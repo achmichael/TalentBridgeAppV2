@@ -17,6 +17,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // Mock API calls
 const updateSettings = async (settings: {
@@ -72,6 +73,15 @@ const AdminSettingsScreen = () => {
       Alert.alert("Error", "Failed to update settings. Please try again.");
     },
   });
+
+  const { signOut } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Logout", onPress: () => signOut() },
+    ]);
+  };
 
   const isLoading = status === "pending";
 
@@ -141,23 +151,28 @@ const AdminSettingsScreen = () => {
     title: string;
     description: string;
     children: ReactNode;
-  }) => (
-    <View style={[styles.settingItem, { borderBottomColor: theme.border }]}>
-      <View style={styles.settingInfo}>
-        <Text style={[styles.settingTitle, { color: theme.text }]}>
-          {title}
-        </Text>
-        {description && (
-          <Text
-            style={[styles.settingDescription, { color: theme.textSecondary }]}
-          >
-            {description}
+  }) => {
+    return (
+      <View style={[styles.settingItem, { borderBottomColor: theme.border }]}>
+        <View style={styles.settingInfo}>
+          <Text style={[styles.settingTitle, { color: theme.text }]}>
+            {title}
           </Text>
-        )}
+          {description && (
+            <Text
+              style={[
+                styles.settingDescription,
+                { color: theme.textSecondary },
+              ]}
+            >
+              {description}
+            </Text>
+          )}
+        </View>
+        <View style={styles.settingControl}>{children}</View>
       </View>
-      <View style={styles.settingControl}>{children}</View>
-    </View>
-  );
+    );
+  };
 
   const SettingSection = ({
     title,
@@ -187,7 +202,15 @@ const AdminSettingsScreen = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: Platform.OS === 'ios' ? 30 : 40 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.background,
+          paddingTop: Platform.OS === "ios" ? 30 : 40,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.text} />
@@ -312,7 +335,6 @@ const AdminSettingsScreen = () => {
               thumbColor={maintenanceMode ? "#E74C3C" : "#f4f3f4"}
             />
           </SettingItem>
-
           <SettingItem
             title="Job Approval Required"
             description="Require admin approval for new job postings"
@@ -434,6 +456,14 @@ const AdminSettingsScreen = () => {
             </>
           )}
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.logoutButton, { backgroundColor: "red" }]}
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <Text style={styles.saveButtonText}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -533,15 +563,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     borderRadius: 10,
-    marginBottom: 30,
+    marginBottom: 15,
   },
   saveButtonText: {
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
     marginLeft: 10,
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginBottom: 15,
   },
 });
 

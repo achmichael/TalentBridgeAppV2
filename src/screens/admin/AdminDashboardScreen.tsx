@@ -294,7 +294,7 @@ const AdminDashboardScreen = () => {
               { backgroundColor: theme.primary },
             ]}
             //   @ts-ignore
-            onPress={() => navigation.navigate("AdminUsers")}
+            onPress={() => navigation.navigate("Users")}
           >
             <Ionicons name="people" size={24} color="#fff" />
             <Text style={styles.quickActionText}>Manage Users</Text>
@@ -305,7 +305,7 @@ const AdminDashboardScreen = () => {
               { backgroundColor: theme.primary },
             ]}
             //   @ts-ignore
-            onPress={() => navigation.navigate("AdminJobs")}
+            onPress={() => navigation.navigate("Jobs")}
           >
             <Ionicons name="briefcase" size={24} color="#fff" />
             <Text style={styles.quickActionText}>Manage Jobs</Text>
@@ -316,7 +316,7 @@ const AdminDashboardScreen = () => {
               { backgroundColor: theme.primary },
             ]}
             //   @ts-ignore
-            onPress={() => navigation.navigate("AdminReports")}
+            onPress={() => navigation.navigate("Reports")}
           >
             <Ionicons name="flag" size={24} color="#fff" />
             <Text style={styles.quickActionText}>View Reports</Text>
