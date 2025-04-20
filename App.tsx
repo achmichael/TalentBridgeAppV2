@@ -61,8 +61,8 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
+    <SafeAreaProvider>
         <ThemeProvider>
           <AuthProvider>
             <NavigationContainer>
@@ -71,7 +71,7 @@ export default function App() {
             </NavigationContainer>
           </AuthProvider>
         </ThemeProvider>
-      </QueryClientProvider>
     </SafeAreaProvider>
+      </QueryClientProvider>
   )
 }

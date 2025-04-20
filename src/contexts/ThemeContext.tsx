@@ -16,19 +16,26 @@ export const lightTheme = {
   border: "#E5E7EB",
   notification: "#EF4444",
   shadow: "rgba(0, 0, 0, 0.1)",
+  textSecondary: "#9CA3AF",
+  cardBackground: "#F3F4F6", // ↳ lebih terang untuk nested cards
+  inputBackground: "#F3F4F6", // ↳ lebih terang untuk input
 }
 
 export const darkTheme = {
-  primary: "#3B82F6", // Lighter Blue
-  secondary: "#34D399", // Lighter Green
-  accent: "#A78BFA", // Lighter Purple
-  background: "#111827",
-  card: "#1F2937",
-  text: "#F9FAFB",
-  border: "#374151",
-  notification: "#F87171",
+  primary: "#3B82F6",        // Lighter Blue
+  secondary: "#34D399",      // Lighter Green
+  accent: "#A78BFA",         // Lighter Purple
+  background: "#111827",     // Almost‑black
+  card: "#1F2937",           // Dark slate
+  cardBackground: "#27303F", // ↳ sedikit lebih terang untuk nested cards
+  text: "#F9FAFB",           // Almost‑white
+  textSecondary: "#9CA3AF",  // ↳ muted cool‑gray untuk teks pendukung
+  border: "#374151",         // Slate gray
+  notification: "#F87171",   // Red‑toned alert
   shadow: "rgba(0, 0, 0, 0.3)",
+  inputBackground: "#374151", // Slate gray
 }
+
 
 type Theme = typeof lightTheme
 

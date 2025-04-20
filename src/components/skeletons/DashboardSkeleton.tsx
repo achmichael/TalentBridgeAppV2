@@ -1,4 +1,5 @@
 "use client"
+
 import { View, StyleSheet, Dimensions } from "react-native"
 import { useTheme } from "../../contexts/ThemeContext"
 import SkeletonLoading from 'expo-skeleton-loading'
