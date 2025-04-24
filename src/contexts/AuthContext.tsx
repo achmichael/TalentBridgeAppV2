@@ -7,6 +7,8 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import useLogin from "@/hooks/use-login";
 import useRegister from "@/hooks/use-register";
+import { useNavigation } from "@react-navigation/native";
+import { navigationRef } from "@/App";
 
 // Register for web redirect
 WebBrowser.maybeCompleteAuthSession();
@@ -25,17 +27,19 @@ export interface User {
 
 // Define auth context interface
 interface AuthContextType {
-  token: string | null;
+  token: string | null | undefined;
   isLoading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
   signUp: (
     username: string,
     email: string,
     password: string,
-    role: UserRole
+    password_confirmation: string,
+    role: UserRole,
   ) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  role: UserRole;
 }
 
 // Create auth context
@@ -46,11 +50,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [jwt, setJwt] = useState<string | null | undefined>(null);
-  const { login, isLoading: loginLoading, token } = useLogin();
+  const { login, isLoading: loginLoading } = useLogin();   
+  const [role, setRole] = useState<UserRole>("client");
+  const navigation = useNavigation();
+
   const {
     register,
     isLoading: registerLoading,
-    token: registerToken,
   } = useRegister();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -64,9 +70,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const jwtJson = await AsyncStorage.getItem("@jwt");
         const role = await AsyncStorage.getItem('@role');
-        if (jwtJson && role) {
-          setJwt(JSON.parse(jwtJson));
-          redirectTo(JSON.parse(role));
+        console.log('jwtJson', jwtJson);
+        console.log('role', role);
+
+        if ((jwtJson && role) && (jwtJson !== null && role !== null)) {
+          try {
+            const parsedJwt = JSON.parse(jwtJson);
+            setJwt(parsedJwt);
+            const parsedRole = JSON.parse(role);
+            setRole(parsedRole as UserRole);
+          } catch (parseError) {
+            console.error("Error parsing stored data:", parseError);
+            await AsyncStorage.removeItem("@jwt");
+            await AsyncStorage.removeItem("@role");
+          }
         }
       } catch (error) {
         console.error("Failed to load Jwt from storage", error);
@@ -74,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoading(false);
       }
     };
+    
 
     loadJwt();
   }, []);
@@ -95,14 +113,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     try {
       const result = await login(username, password);
-      if (token && !loginLoading) {
-        await AsyncStorage.setItem("@jwt", token);
-        await AsyncStorage.setItem("@role", result.data.role);
-        setJwt(token);
-        redirectTo(result.data.role);
+      if (result.access_token) {
+        await AsyncStorage.setItem("@jwt", result.access_token);
+        await AsyncStorage.setItem("@role", result?.role || 'client');
+        setJwt(result.access_token);
+        setRole(result?.role || 'client');
       }
     } catch (error) {
-      console.error("Sign in failed", error);
+      console.log("Sign in failed", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -113,19 +131,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     username: string,
     email: string,
     password: string,
+    password_confirmation: string,
     role: UserRole
   ) => {
     setIsLoading(true);
     try {
-      const result = await register(username, email, password, role);
-      if (registerToken && !registerLoading) {
-        await AsyncStorage.setItem("@jwt", registerToken);
-        await AsyncStorage.setItem('@role', result.data.role);
-        setJwt(registerToken)
-        redirectTo(result.data.role);
+      const result = await register(username, email, password, password_confirmation, role);
+      if (result.access_token && !registerLoading) {
+        await AsyncStorage.setItem("@jwt", result?.access_token);
+        await AsyncStorage.setItem('@role', result?.role || 'client');
+        setJwt(result.access_token);
+        setRole(role || 'client');
       }
     } catch (error) {
-      console.error("Sign up failed", error);
+      console.log("Sign up failed", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -154,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ token, isLoading, signIn, signUp, signOut, signInWithGoogle }}
+      value={{ token: jwt, isLoading, signIn, signUp, signOut, signInWithGoogle, role }}
     >
       {children}
     </AuthContext.Provider>
@@ -167,19 +186,4 @@ export const useAuth = () => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
-
-const redirectTo = (role: UserRole) => {
-  switch (role) {
-    case "client":
-      return "/client/dashboard";
-    case "freelancer":
-      return "/freelancer/dashboard";
-    case "company":
-      return "/company/dashboard";
-    case "admin":
-      return "/admin/dashboard";
-    default:
-      return "/";
-  }
 };

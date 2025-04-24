@@ -44,7 +44,8 @@ const LoginScreen = () => {
     try {
       await signIn(username, password)
     } catch (error) {
-      Alert.alert("Login Failed", "Invalid username or password")
+      const errorMessage = error instanceof Error ? error.message : "Could not sign in";
+      Alert.alert("Login Failed", errorMessage)
     } finally {
       setIsLoading(false)
     }

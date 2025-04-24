@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  StatusBar,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { StackNavigationProp } from "@react-navigation/stack"
@@ -58,7 +59,7 @@ const RegisterScreen = () => {
 
     setIsLoading(true)
     try {
-      await signUp(username, email, password, role)
+      await signUp(username, email, password, confirmPassword, role)
     } catch (error) {
       Alert.alert("Registration Failed", "Could not create account")
     } finally {
@@ -76,7 +77,7 @@ const RegisterScreen = () => {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background, paddingTop: Platform.OS === 'ios' ? StatusBar.currentHeight : 30 }]}>
         <View style={styles.header}>
           <Image source={require("../../../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
           <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>

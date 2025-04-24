@@ -1,26 +1,29 @@
-"use client"
+"use client";
 
-import "react-native-gesture-handler"
-import { useEffect, useState } from "react"
-import { SafeAreaProvider } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
-import * as SplashScreen from "expo-splash-screen"
-import * as Font from "expo-font"
-import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
-import { NavigationContainer } from "@react-navigation/native"
-import { AuthProvider } from "./src/contexts/AuthContext"
-import RootNavigator from "./src/navigation/RootNavigator"
-import { ThemeProvider } from "./src/contexts/ThemeContext"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import "react-native-gesture-handler";
+import { useEffect, useState } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import { createNavigationContainerRef, NavigationContainer } from "@react-navigation/native";
+import { AuthProvider } from "./src/contexts/AuthContext";
+import RootNavigator from "./src/navigation/RootNavigator";
+import { ThemeProvider } from "./src/contexts/ThemeContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Prevent auto hiding of splash screen
-SplashScreen.preventAutoHideAsync()
+SplashScreen.preventAutoHideAsync();
 
 // Create a client for React Query
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
+
+export const navigationRef = createNavigationContainerRef();
 
 export default function App() {
-  const [appIsReady, setAppIsReady] = useState(false)
+  const [appIsReady, setAppIsReady] = useState(false);
+  const [isNavigationReady, setIsNavigationReady] = useState<boolean>(false);
 
   useEffect(() => {
     async function prepare() {
@@ -33,45 +36,48 @@ export default function App() {
           // "Poppins-Regular": require("./assets/fonts/Poppins-Regular.ttf"),
           // "Poppins-Medium": require("./assets/fonts/Poppins-Medium.ttf"),
           // "Poppins-Bold": require("./assets/fonts/Poppins-Bold.ttf"),
-        })
+        });
       } catch (e) {
-        console.warn(e)
+        console.warn(e);
       } finally {
         // Tell the application to render
-        setAppIsReady(true)
+        setAppIsReady(true);
       }
     }
 
-    prepare()
-  }, [])
+    prepare();
+  }, []);
 
   useEffect(() => {
     async function hideSplash() {
       if (appIsReady) {
         // Hide splash screen
-        await SplashScreen.hideAsync()
+        await SplashScreen.hideAsync();
       }
     }
 
-    hideSplash()
-  }, [appIsReady])
+    hideSplash();
+  }, [appIsReady]);
 
   if (!appIsReady) {
-    return null
+    return null;
   }
 
   return (
-      <QueryClientProvider client={queryClient}>
-    <SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <NavigationContainer>
+          <NavigationContainer
+          ref={navigationRef}
+          onReady={() => setIsNavigationReady(true)}
+          >
+            <AuthProvider>
               <RootNavigator />
               <StatusBar style="auto" />
-            </NavigationContainer>
-          </AuthProvider>
+            </AuthProvider>
+          </NavigationContainer>
         </ThemeProvider>
-    </SafeAreaProvider>
-      </QueryClientProvider>
-  )
+      </SafeAreaProvider>
+    </QueryClientProvider>
+  );
 }
