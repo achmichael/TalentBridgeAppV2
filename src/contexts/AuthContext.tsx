@@ -21,8 +21,9 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: UserRole;
-  avatar?: string;
+  role: {
+    role_name: string;
+  };
 }
 
 // Define auth context interface
@@ -35,11 +36,12 @@ interface AuthContextType {
     email: string,
     password: string,
     password_confirmation: string,
-    role: UserRole,
+    role: UserRole
   ) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   role: UserRole;
+  user: User | null;
 }
 
 // Create auth context
@@ -49,15 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [jwt, setJwt] = useState<string | null | undefined>(null);
-  const { login, isLoading: loginLoading } = useLogin();   
+  const { login, isLoading: loginLoading } = useLogin();
   const [role, setRole] = useState<UserRole>("client");
   const navigation = useNavigation();
 
-  const {
-    register,
-    isLoading: registerLoading,
-  } = useRegister();
+  const { register, isLoading: registerLoading } = useRegister();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: "YOUR_IOS_CLIENT_ID",
@@ -69,20 +69,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const loadJwt = async () => {
       try {
         const jwtJson = await AsyncStorage.getItem("@jwt");
-        const role = await AsyncStorage.getItem('@role');
-        console.log('jwtJson', jwtJson);
-        console.log('role', role);
+        const role = await AsyncStorage.getItem("@role");
+        const userJson = await AsyncStorage.getItem("@user");
 
-        if ((jwtJson && role) && (jwtJson !== null && role !== null)) {
+        console.log("jwtJson", jwtJson);
+        console.log("role", role);
+        console.log("userJson", userJson);
+
+        if (jwtJson && role && jwtJson !== null && role !== null && userJson !== null) {
           try {
             const parsedJwt = JSON.parse(jwtJson);
             setJwt(parsedJwt);
             const parsedRole = JSON.parse(role);
             setRole(parsedRole as UserRole);
+            const parsedUser = JSON.parse(userJson) as User;
+            setUser(parsedUser);
           } catch (parseError) {
             console.error("Error parsing stored data:", parseError);
             await AsyncStorage.removeItem("@jwt");
             await AsyncStorage.removeItem("@role");
+            await AsyncStorage.removeItem("@user");
           }
         }
       } catch (error) {
@@ -91,7 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoading(false);
       }
     };
-    
 
     loadJwt();
   }, []);
@@ -99,13 +104,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (response?.type === "success") {
       const { authentication } = response;
-      handleUserAuthenticated(authentication?.accessToken, 'client');
+      handleUserAuthenticated(authentication?.accessToken, "client");
     }
   }, [response]);
 
-  const handleUserAuthenticated = async (token: string | undefined, role: UserRole) => {
+  const handleUserAuthenticated = async (
+    token: string | undefined,
+    role: UserRole
+  ) => {
     await AsyncStorage.setItem("@jwt", JSON.stringify(token));
-    await AsyncStorage.setItem('@role', JSON.stringify(role));
+    await AsyncStorage.setItem("@role", JSON.stringify(role));
     setJwt(token);
   };
 
@@ -114,10 +122,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const result = await login(username, password);
       if (result.access_token) {
-        await AsyncStorage.setItem("@jwt", result.access_token);
-        await AsyncStorage.setItem("@role", result?.user.role.role_name || 'client');
+        await AsyncStorage.setItem("@jwt", JSON.stringify(result.access_token));
+        await AsyncStorage.setItem(
+          "@role",
+          JSON.stringify(result?.user.role.role_name || "client")
+        );
+        await AsyncStorage.setItem("@user", JSON.stringify(result?.user));
+
         setJwt(result.access_token);
-        setRole(result?.role || 'client');
+        setRole(result?.user.role.role_name || "client");
+        setUser(result?.user);
       }
     } catch (error) {
       console.log("Sign in failed", error);
@@ -136,12 +150,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   ) => {
     setIsLoading(true);
     try {
-      const result = await register(username, email, password, password_confirmation, role);
+      const result = await register(
+        username,
+        email,
+        password,
+        password_confirmation,
+        role
+      );
       if (result.access_token && !registerLoading) {
-        await AsyncStorage.setItem("@jwt", result?.access_token);
-        await AsyncStorage.setItem('@role', result?.user.role.role_name || 'client');
+        await AsyncStorage.setItem(
+          "@jwt",
+          JSON.stringify(result?.access_token)
+        );
+        await AsyncStorage.setItem(
+          "@role",
+          JSON.stringify(result?.user.role.role_name || "client")
+        );
+        await AsyncStorage.setItem("@user", JSON.stringify(result?.user));
         setJwt(result.access_token);
-        setRole(role || result?.user.role.role_name || 'client');
+        setRole(role || result?.user.role.role_name || "client");
+        setUser(result.user);
       }
     } catch (error) {
       console.log("Sign up failed", error);
@@ -173,7 +201,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ token: jwt, isLoading, signIn, signUp, signOut, signInWithGoogle, role }}
+      value={{
+        token: jwt,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+        signInWithGoogle,
+        role,
+        user,
+      }}
     >
       {children}
     </AuthContext.Provider>

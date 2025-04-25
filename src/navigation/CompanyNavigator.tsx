@@ -4,7 +4,6 @@ import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../contexts/ThemeContext"
 
-// Screens
 import CompanyDashboardScreen from "../screens/company/CompanyDashboardScreen"
 import CompanyJobsScreen from "../screens/company/CompanyJobsScreen"
 import CompanyTeamScreen from "../screens/company/CompanyTeamScreen"
@@ -15,7 +14,6 @@ import JobDetailsScreen from "../screens/company/JobDetailsScreen"
 import ApplicantProfileScreen from "../screens/company/ApplicantProfileScreen"
 import CreateJobScreen from "../screens/company/CreateJobScreen"
 
-// Stack param lists
 export type CompanyStackParamList = {
   CompanyTabs: undefined
   JobDetails: { jobId: string }
@@ -35,7 +33,7 @@ export type CompanyTabParamList = {
 const Stack = createStackNavigator<CompanyStackParamList>()
 const Tab = createBottomTabNavigator<CompanyTabParamList>()
 
-// Tab Navigator
+
 const CompanyTabNavigator = () => {
   const { theme } = useTheme()
 

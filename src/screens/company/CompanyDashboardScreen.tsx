@@ -94,7 +94,6 @@ const CompanyDashboardScreen = () => {
   const { theme } = useTheme();
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-
   const {
     data: dashboardData,
     isLoading,
@@ -129,7 +128,7 @@ const CompanyDashboardScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={[styles.greeting, { color: theme.text }]}>
+          <Text style={[styles.greeting, { color: theme.text, textTransform: "capitalize" }]}>
             Hello, {user?.username}
           </Text>
           <Text style={[styles.subGreeting, { color: theme.text + "80" }]}>

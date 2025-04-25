@@ -7,19 +7,21 @@ import FreelancerNavigator from "./FreelancerNavigator"
 import CompanyNavigator from "./CompanyNavigator"
 import AdminNavigator from "./AdminNavigator"
 import LoadingScreen from "../screens/common/LoadingScreen"
+import { useEffect } from "react"
 
 const Stack = createStackNavigator()
 
 const RootNavigator = () => {
-  const { token, isLoading, role } = useAuth()
+  const { token, isLoading, role, user } = useAuth()
 
+  
   if (isLoading) {
     return <LoadingScreen />
   }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!token ? (
+      {!token && !user ? (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       ) : (
         <>
