@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await login(username, password);
       if (result.access_token) {
         await AsyncStorage.setItem("@jwt", result.access_token);
-        await AsyncStorage.setItem("@role", result?.role || 'client');
+        await AsyncStorage.setItem("@role", result?.user.role.role_name || 'client');
         setJwt(result.access_token);
         setRole(result?.role || 'client');
       }
@@ -139,9 +139,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await register(username, email, password, password_confirmation, role);
       if (result.access_token && !registerLoading) {
         await AsyncStorage.setItem("@jwt", result?.access_token);
-        await AsyncStorage.setItem('@role', result?.role || 'client');
+        await AsyncStorage.setItem('@role', result?.user.role.role_name || 'client');
         setJwt(result.access_token);
-        setRole(role || 'client');
+        setRole(role || result?.user.role.role_name || 'client');
       }
     } catch (error) {
       console.log("Sign up failed", error);

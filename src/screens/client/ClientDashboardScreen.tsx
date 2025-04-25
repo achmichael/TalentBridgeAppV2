@@ -80,7 +80,7 @@ const fetchActiveJobs = async () => {
 const ClientDashboardScreen = () => {
   const navigation = useNavigation<ClientDashboardScreenNavigationProp>()
   const { theme } = useTheme()
-  const { user } = useAuth()
+  const { token } = useAuth()
 
   // Fetch recommended freelancers
   const {
@@ -123,7 +123,7 @@ const ClientDashboardScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={[styles.greeting, { color: theme.text }]}>Hello, {user?.username}</Text>
+          <Text style={[styles.greeting, { color: theme.text }]}>Hello, {}</Text>
           <Text style={[styles.subGreeting, { color: theme.text + "80" }]}>
             Find the perfect freelancer for your project
           </Text>
