@@ -15,6 +15,7 @@ import {
 import { useNavigation } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
+import withAuth from "@/src/hoc/withAuth"
 
 const CreateJobScreen = () => {
   const navigation = useNavigation()
@@ -451,4 +452,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default CreateJobScreen
+export default withAuth(CreateJobScreen)

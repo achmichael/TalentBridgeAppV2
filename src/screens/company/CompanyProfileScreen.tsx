@@ -18,6 +18,7 @@ import { useTheme } from "../../contexts/ThemeContext"
 import { useAuth } from "../../contexts/AuthContext"
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 type CompanyProfileScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
 
@@ -656,5 +657,5 @@ const styles = StyleSheet.create({
   },
 })
 
-export default CompanyProfileScreen
+export default withAuth(CompanyProfileScreen)
 

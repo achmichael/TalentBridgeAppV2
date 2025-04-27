@@ -18,6 +18,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import type { FreelancerStackParamList } from "../../navigation/FreelancerNavigator";
 import { useQuery } from "@tanstack/react-query";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
+import withAuth from "@/src/hoc/withAuth";
 
 type FreelancerDashboardScreenNavigationProp =
   StackNavigationProp<FreelancerStackParamList>;
@@ -672,4 +673,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FreelancerDashboardScreen;
+export default withAuth(FreelancerDashboardScreen);

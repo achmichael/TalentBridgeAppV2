@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 type ApplicantProfileScreenRouteProp = RouteProp<CompanyStackParamList, "ApplicantProfile">
 type ApplicantProfileScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
@@ -665,4 +666,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ApplicantProfileScreen
+export default withAuth(ApplicantProfileScreen)

@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 // Mock data fetching function
 const fetchProjects = async (filter = "all") => {
@@ -454,4 +455,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default FreelancerProjectsScreen
+export default withAuth(FreelancerProjectsScreen)

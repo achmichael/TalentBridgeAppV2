@@ -18,6 +18,7 @@ import { useTheme } from "../../contexts/ThemeContext"
 import { useAuth } from "../../contexts/AuthContext"
 import type { ClientStackParamList } from "../../navigation/ClientNavigator"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 type ClientProfileScreenNavigationProp = StackNavigationProp<ClientStackParamList>
 
@@ -680,4 +681,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ClientProfileScreen
+export default withAuth(ClientProfileScreen)

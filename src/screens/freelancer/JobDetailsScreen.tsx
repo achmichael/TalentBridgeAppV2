@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import type { FreelancerStackParamList } from "../../navigation/FreelancerNavigator"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 type JobDetailsScreenRouteProp = RouteProp<FreelancerStackParamList, "JobDetails">
 type JobDetailsScreenNavigationProp = StackNavigationProp<FreelancerStackParamList>
@@ -465,4 +466,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default JobDetailsScreen
+export default withAuth(JobDetailsScreen)

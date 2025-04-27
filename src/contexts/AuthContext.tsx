@@ -42,6 +42,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   role: UserRole;
   user: User | null;
+  logout: () => Promise<void>;
 }
 
 // Create auth context
@@ -182,6 +183,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = async () => {
     setIsLoading(true);
     try {
+      setJwt(null);
+      setUser(null);
       await AsyncStorage.removeItem("@jwt");
       await AsyncStorage.removeItem("@role");
     } catch (error) {
@@ -210,6 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signInWithGoogle,
         role,
         user,
+        logout: signOut
       }}
     >
       {children}

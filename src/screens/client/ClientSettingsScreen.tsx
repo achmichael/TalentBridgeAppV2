@@ -6,6 +6,7 @@ import { useNavigation } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useAuth } from "../../contexts/AuthContext"
+import withAuth from "@/src/hoc/withAuth"
 
 const ClientSettingsScreen = () => {
   const navigation = useNavigation()
@@ -298,4 +299,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ClientSettingsScreen
+export default withAuth(ClientSettingsScreen)

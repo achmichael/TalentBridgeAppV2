@@ -18,6 +18,7 @@ import { useTheme } from "../../contexts/ThemeContext"
 import { useAuth } from "../../contexts/AuthContext"
 import type { FreelancerStackParamList } from "../../navigation/FreelancerNavigator"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 type FreelancerProfileScreenNavigationProp = StackNavigationProp<FreelancerStackParamList>
 
@@ -580,4 +581,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default FreelancerProfileScreen
+export default withAuth(FreelancerProfileScreen)

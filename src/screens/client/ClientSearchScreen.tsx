@@ -18,6 +18,7 @@ import { useTheme } from "../../contexts/ThemeContext"
 import type { ClientStackParamList } from "../../navigation/ClientNavigator"
 import { useQuery } from "@tanstack/react-query"
 import FreelancerCard from "../../components/client/FreelancerCard"
+import withAuth from "@/src/hoc/withAuth"
 
 type ClientSearchScreenNavigationProp = StackNavigationProp<ClientStackParamList>
 
@@ -340,4 +341,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ClientSearchScreen
+export default withAuth(ClientSearchScreen)

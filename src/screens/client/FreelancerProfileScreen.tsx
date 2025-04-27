@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import type { ClientStackParamList } from "../../navigation/ClientNavigator"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 type FreelancerProfileScreenRouteProp = RouteProp<ClientStackParamList, "FreelancerProfile">
 type FreelancerProfileScreenNavigationProp = StackNavigationProp<ClientStackParamList>
@@ -593,4 +594,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default FreelancerProfileScreen
+export default withAuth(FreelancerProfileScreen)

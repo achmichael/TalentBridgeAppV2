@@ -18,82 +18,44 @@ import { useAuth } from "../../contexts/AuthContext";
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator";
 import { useQuery } from "@tanstack/react-query";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
+import withAuth from "@/src/hoc/withAuth";
+import { baseUrl } from "@/src/config/baseUrl";
+import { Job } from "@/src/types/Job";
 
 type CompanyDashboardScreenNavigationProp =
   StackNavigationProp<CompanyStackParamList>;
 
-// Mock data fetching functions
-const fetchDashboardData = async () => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return {
-    stats: {
-      activeJobs: 5,
-      totalApplicants: 28,
-      pendingReviews: 7,
-      teamMembers: 12,
-    },
-    recentApplicants: [
-      {
-        id: "1",
-        name: "John Doe",
-        title: "Full Stack Developer",
-        avatar: "https://ui-avatars.com/api/?name=John+Doe",
-        appliedFor: "Senior React Developer",
-        appliedAt: "2023-11-25T10:30:00",
-      },
-      {
-        id: "2",
-        name: "Jane Smith",
-        title: "UI/UX Designer",
-        avatar: "https://ui-avatars.com/api/?name=Jane+Smith",
-        appliedFor: "Product Designer",
-        appliedAt: "2023-11-24T14:45:00",
-      },
-      {
-        id: "3",
-        name: "Mike Johnson",
-        title: "Mobile Developer",
-        avatar: "https://ui-avatars.com/api/?name=Mike+Johnson",
-        appliedFor: "React Native Developer",
-        appliedAt: "2023-11-23T09:15:00",
-      },
-    ],
-    activeJobs: [
-      {
-        id: "1",
-        title: "Senior React Developer",
-        type: "Full-time",
-        location: "Remote",
-        applicants: 12,
-        postedAt: "2023-11-15",
-      },
-      {
-        id: "2",
-        title: "Product Designer",
-        type: "Full-time",
-        location: "New York, USA",
-        applicants: 8,
-        postedAt: "2023-11-18",
-      },
-      {
-        id: "3",
-        title: "React Native Developer",
-        type: "Contract",
-        location: "Remote",
-        applicants: 5,
-        postedAt: "2023-11-20",
-      },
-    ],
-  };
-};
-
 const CompanyDashboardScreen = () => {
   const navigation = useNavigation<CompanyDashboardScreenNavigationProp>();
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: user?.id,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to fetch dashboard data");
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error("Error in fetchDashboardData:", error);
+      throw error;
+    }
+  };
+
+
   const {
     data: dashboardData,
     isLoading,
@@ -128,7 +90,12 @@ const CompanyDashboardScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={[styles.greeting, { color: theme.text, textTransform: "capitalize" }]}>
+          <Text
+            style={[
+              styles.greeting,
+              { color: theme.text, textTransform: "capitalize" },
+            ]}
+          >
             Hello, {user?.username}
           </Text>
           <Text style={[styles.subGreeting, { color: theme.text + "80" }]}>
@@ -146,9 +113,7 @@ const CompanyDashboardScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
-          <Text style={styles.statsNumber}>
-            {dashboardData?.stats.activeJobs}
-          </Text>
+          <Text style={styles.statsNumber}>{dashboardData?.activeJobs}</Text>
           <Text style={styles.statsLabel}>Active Jobs</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
@@ -264,7 +229,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.recentApplicants.map((applicant) => (
+        {dashboardData?.recentApplicants.map((applicant: any) => (
           <TouchableOpacity
             key={applicant.id}
             style={[styles.applicantCard, { backgroundColor: theme.card }]}
@@ -313,7 +278,7 @@ const CompanyDashboardScreen = () => {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Active Jobs
           </Text>
-           {/* @ts-ignore */}
+          {/* @ts-ignore */}
           <TouchableOpacity onPress={() => navigation.navigate("Jobs")}>
             <Text style={[styles.seeAll, { color: theme.accent }]}>
               See All
@@ -321,7 +286,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.activeJobs.map((job) => (
+        {dashboardData?.activeJobs.map((job: any) => (
           <TouchableOpacity
             key={job.id}
             style={[styles.jobCard, { backgroundColor: theme.card }]}
@@ -675,4 +640,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CompanyDashboardScreen;
+export default withAuth(CompanyDashboardScreen);

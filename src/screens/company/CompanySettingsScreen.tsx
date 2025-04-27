@@ -6,6 +6,7 @@ import { useNavigation } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useAuth } from "../../contexts/AuthContext"
+import withAuth from "@/src/hoc/withAuth"
 
 const CompanySettingsScreen = () => {
   const navigation = useNavigation()
@@ -298,5 +299,5 @@ const styles = StyleSheet.create({
   },
 })
 
-export default CompanySettingsScreen
+export default withAuth(CompanySettingsScreen)
 

@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useQuery } from "@tanstack/react-query"
+import withAuth from "@/src/hoc/withAuth"
 
 // Mock data fetching function
 const fetchNotifications = async () => {
@@ -268,4 +269,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default FreelancerNotificationsScreen
+export default withAuth(FreelancerNotificationsScreen)

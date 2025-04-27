@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query"
 import JobCard from "../../components/client/JobCard"
 import FreelancerCard from "../../components/client/FreelancerCard"
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton"
+import withAuth from "@/src/hoc/withAuth"
 
 type ClientDashboardScreenNavigationProp = StackNavigationProp<ClientStackParamList>
 
@@ -399,4 +400,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ClientDashboardScreen
+export default withAuth(ClientDashboardScreen)

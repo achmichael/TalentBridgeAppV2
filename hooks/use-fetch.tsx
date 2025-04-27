@@ -14,7 +14,7 @@ const useFetch = (url: string, options?: object) => {
                 if (!response.ok){
                     throw new Error(`${result.message}`);
                 }
-                setData(result);
+                setData(result.data);
                 setLoading(false);
 
             }catch(error: unknown){
@@ -27,7 +27,7 @@ const useFetch = (url: string, options?: object) => {
         }
 
         fetchData();
-    })
+    });
 
     return { data, loading, error }; 
 }
