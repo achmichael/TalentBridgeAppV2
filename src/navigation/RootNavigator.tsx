@@ -11,33 +11,19 @@ import LoadingScreen from "../screens/common/LoadingScreen";
 const Stack = createStackNavigator();
 
 const RootNavigator = () => {
-  const { isLoading, role } = useAuth();
-
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Auth">
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-        <>
-          {role === "client" && (
-            <Stack.Screen name="ClientRoot" component={ClientNavigator} />
-          )}
-          {role === "freelancer" && (
-            <Stack.Screen
-              name="FreelancerRoot"
-              component={FreelancerNavigator}
-            />
-          )}
-          {role === "company" && (
-            <Stack.Screen name="CompanyRoot" component={CompanyNavigator} />
-          )}
-          {role === "admin" && (
-            <Stack.Screen name="AdminRoot" component={AdminNavigator} />
-          )}
-        </>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Auth" component={AuthNavigator} />
+      <Stack.Screen name="ClientRoot" component={ClientNavigator} />
+      <Stack.Screen name="FreelancerRoot" component={FreelancerNavigator} />
+      <Stack.Screen name="CompanyRoot" component={CompanyNavigator} />
+      <Stack.Screen name="AdminRoot" component={AdminNavigator} />
     </Stack.Navigator>
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import "react-native-gesture-handler";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -23,7 +23,9 @@ export const navigationRef = createNavigationContainerRef();
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
-  const [isNavigationReady, setIsNavigationReady] = useState<boolean>(false);
+  const [isNavReady, setIsNavReady] = useState(false);
+
+  // const navigationRef = useRef(null);
 
   useEffect(() => {
     async function prepare() {
@@ -69,9 +71,9 @@ export default function App() {
         <ThemeProvider>
           <NavigationContainer
           ref={navigationRef}
-          onReady={() => setIsNavigationReady(true)}
+          onReady={() => setIsNavReady(true)}
           >
-            <AuthProvider>
+            <AuthProvider isNavReady={isNavReady}>
               <RootNavigator />
               <StatusBar style="auto" />
             </AuthProvider>

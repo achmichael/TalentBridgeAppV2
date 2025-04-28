@@ -30,7 +30,6 @@ const CompanyDashboardScreen = () => {
   const { theme } = useTheme();
   const { user, token } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-
   const fetchDashboardData = async () => {
     try {
       const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
@@ -44,6 +43,7 @@ const CompanyDashboardScreen = () => {
       });
 
       const result = await response.json();
+
       if (!response.ok) {
         throw new Error(result.message || "Failed to fetch dashboard data");
       }

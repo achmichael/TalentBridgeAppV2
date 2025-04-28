@@ -12,22 +12,18 @@ import {
   ScrollView,
   Alert,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import type { StackNavigationProp } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useAuth } from "../../contexts/AuthContext"
-import type { AuthStackParamList } from "../../navigation/AuthNavigator"
 import Input from "../../components/common/Input"
 import Button from "../../components/common/Button"
 import SocialButton from "../../components/common/SocialButton"
-
-type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, "Login">
+import { redirectBasedOnRole } from "@/src/components/common/navigation"
+import { navigationRef } from "@/App"
 
 const LoginScreen = () => {
-  const navigation = useNavigation<LoginScreenNavigationProp>()
   const { theme } = useTheme()
-  const { signIn, signInWithGoogle } = useAuth()
+  const { signIn, signInWithGoogle, role } = useAuth()
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -43,6 +39,7 @@ const LoginScreen = () => {
     setIsLoading(true)
     try {
       await signIn(username, password)
+      redirectBasedOnRole(role)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Could not sign in";
       Alert.alert("Login Failed", errorMessage)
@@ -113,7 +110,7 @@ const LoginScreen = () => {
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: theme.text }]}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+          <TouchableOpacity onPress={() => navigationRef.navigate("Register" as never)}>
             <Text style={[styles.footerLink, { color: theme.primary }]}>Sign Up</Text>
           </TouchableOpacity>
         </View>

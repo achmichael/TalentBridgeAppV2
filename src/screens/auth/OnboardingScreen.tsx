@@ -2,13 +2,9 @@
 
 import { useRef, useState } from "react"
 import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, Image, Animated } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import type { StackNavigationProp } from "@react-navigation/stack"
 import { useTheme } from "../../contexts/ThemeContext"
-import type { AuthStackParamList } from "../../navigation/AuthNavigator"
 import Button from "../../components/common/Button"
-
-type OnboardingScreenNavigationProp = StackNavigationProp<AuthStackParamList, "Onboarding">
+import { navigationRef } from "@/App"
 
 const { width, height } = Dimensions.get("window")
 
@@ -41,7 +37,6 @@ const onboardingData: OnboardingItem[] = [
 ]
 
 const OnboardingScreen = () => {
-  const navigation = useNavigation<OnboardingScreenNavigationProp>()
   const { theme } = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   const scrollX = useRef(new Animated.Value(0)).current
@@ -57,7 +52,7 @@ const OnboardingScreen = () => {
     if (currentIndex < onboardingData.length - 1) {
       slidesRef.current?.scrollToIndex({ index: currentIndex + 1 })
     } else {
-      navigation.navigate("Login")
+      navigationRef.navigate("Login" as never)
     }
   }
 
@@ -76,7 +71,7 @@ const OnboardingScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.skipContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+        <TouchableOpacity onPress={() => navigationRef.navigate("ClientRoot" as never)}>
           <Text style={[styles.skipText, { color: theme.primary }]}>Skip</Text>
         </TouchableOpacity>
       </View>
@@ -130,7 +125,7 @@ const OnboardingScreen = () => {
         {currentIndex === onboardingData.length - 1 && (
           <TouchableOpacity
             style={[styles.loginButton, { borderColor: theme.primary }]}
-            onPress={() => navigation.navigate("Login")}
+            onPress={() => navigationRef.navigate("Login" as never)}
           >
             <Text style={[styles.loginButtonText, { color: theme.primary }]}>I already have an account</Text>
           </TouchableOpacity>
