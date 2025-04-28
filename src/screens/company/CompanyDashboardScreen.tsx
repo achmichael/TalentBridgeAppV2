@@ -20,7 +20,6 @@ import { useQuery } from "@tanstack/react-query";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import withAuth from "@/src/hoc/withAuth";
 import { baseUrl } from "@/src/config/baseUrl";
-import { Job } from "@/src/types/Job";
 
 type CompanyDashboardScreenNavigationProp =
   StackNavigationProp<CompanyStackParamList>;
@@ -35,7 +34,8 @@ const CompanyDashboardScreen = () => {
       const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           id: user?.id,
@@ -43,7 +43,6 @@ const CompanyDashboardScreen = () => {
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.message || "Failed to fetch dashboard data");
       }
@@ -64,6 +63,8 @@ const CompanyDashboardScreen = () => {
     queryKey: ["companyDashboard"],
     queryFn: fetchDashboardData,
   });
+
+  console.log('DashboardData:', dashboardData);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -113,18 +114,18 @@ const CompanyDashboardScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
-          <Text style={styles.statsNumber}>{dashboardData?.activeJobs}</Text>
+          <Text style={styles.statsNumber}>{dashboardData?.activeJobs || 0}</Text>
           <Text style={styles.statsLabel}>Active Jobs</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
           <Text style={styles.statsNumber}>
-            {dashboardData?.stats.totalApplicants}
+            {dashboardData?.totalApplicants || 0}
           </Text>
           <Text style={styles.statsLabel}>Applicants</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.secondary }]}>
           <Text style={styles.statsNumber}>
-            {dashboardData?.stats.teamMembers}
+            {dashboardData?.teamMembers || 0}
           </Text>
           <Text style={styles.statsLabel}>Team</Text>
         </View>
@@ -229,7 +230,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.recentApplicants.map((applicant: any) => (
+        {dashboardData?.recentApplicants?.map((applicant: any) => (
           <TouchableOpacity
             key={applicant.id}
             style={[styles.applicantCard, { backgroundColor: theme.card }]}
@@ -286,7 +287,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.activeJobs.map((job: any) => (
+        {dashboardData?.map((job: any) => (
           <TouchableOpacity
             key={job.id}
             style={[styles.jobCard, { backgroundColor: theme.card }]}

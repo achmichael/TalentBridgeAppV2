@@ -18,7 +18,5 @@ export function redirectBasedOnRole(role: string) {
       default:
         navigationRef.navigate("Auth" as never);
     }
-  } else {
-    console.error("Navigation is not ready");
   }
 }

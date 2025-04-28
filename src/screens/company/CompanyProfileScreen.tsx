@@ -19,6 +19,7 @@ import { useAuth } from "../../contexts/AuthContext"
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
 import { useQuery } from "@tanstack/react-query"
 import withAuth from "@/src/hoc/withAuth"
+import LoadingScreen from "../common/LoadingScreen"
 
 type CompanyProfileScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
 
@@ -126,9 +127,7 @@ const CompanyProfileScreen = () => {
 
   if (isLoading || !company) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.accent} />
-      </View>
+      <LoadingScreen />
     )
   }
 

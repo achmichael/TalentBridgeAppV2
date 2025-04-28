@@ -7,7 +7,6 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import useLogin from "@/hooks/use-login";
 import useRegister from "@/hooks/use-register";
-import { CommonActions, useNavigation } from "@react-navigation/native";
 import { redirectBasedOnRole } from "../components/common/navigation";
 
 // Register for web redirect

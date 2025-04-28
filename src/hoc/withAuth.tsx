@@ -5,6 +5,7 @@ import { baseUrl } from "@/src/config/baseUrl";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { CommonActions } from "@react-navigation/native";
 import { navigationRef } from "@/App";
+import LoadingScreen from "../screens/common/LoadingScreen";
 
 const redirectToAuth = (navigation: any) => {
   if (!navigation) {
@@ -24,7 +25,7 @@ const withAuth = (WrappedComponent: React.ComponentType<any>) => {
     const [isVerifying, setIsVerifying] = useState(true);
 
     useEffect(() => {
-        const verifyToken = async () => {
+      const verifyToken = async () => {
         if (!token || !user) {
           setIsVerifying(false);
           redirectToAuth(navigationRef);
@@ -64,7 +65,7 @@ const withAuth = (WrappedComponent: React.ComponentType<any>) => {
             backgroundColor: theme.background,
           }}
         >
-          <ActivityIndicator size="large" color={theme.accent} />
+          <LoadingScreen />
         </View>
       );
     }
