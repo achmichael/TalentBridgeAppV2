@@ -1,28 +1,40 @@
 {
   "expo": {
-    "name": "job-search-app",
-    "slug": "job-search-app",
+    "name": "talent-bridge-app",
+    "slug": "talent-bridge-app",
+    "scheme": "talentbridgeapp://redirect",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.talentbridge.app"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.talentbridge.app"
     },
+    "package": "com.talentbridge.app",
     "web": {
       "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ffdfb612-c31c-4dfd-8ce1-899d43096529"
+      }
     }
   }
 }

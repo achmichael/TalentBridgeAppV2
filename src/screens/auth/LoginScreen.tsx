@@ -48,9 +48,9 @@ const LoginScreen = () => {
     }
   }
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     try {
-      await signInWithGoogle()
+      signInWithGoogle()
     } catch (error) {
       Alert.alert("Google Login Failed", "Could not sign in with Google")
     }

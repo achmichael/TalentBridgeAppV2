@@ -1,10 +1,10 @@
+import { User } from "./User";
 export type Company = {
   id: string;
   name: string;
-  description: string;
   image: string;
+  user: User;
   address?: string;
-  phone?: string;
-  email?: string;
   website?: string;
+  foundedAt?: string;
 };
