@@ -7,7 +7,7 @@ import { CommonActions } from "@react-navigation/native";
 import { navigationRef } from "@/App";
 import LoadingScreen from "../screens/common/LoadingScreen";
 
-const redirectToAuth = (navigation: any) => {
+export const redirectToAuth = (navigation: any) => {
   if (!navigation) {
     navigation.dispatch(
       CommonActions.reset({

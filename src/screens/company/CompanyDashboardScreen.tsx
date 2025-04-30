@@ -43,6 +43,7 @@ const CompanyDashboardScreen = () => {
       });
 
       const result = await response.json();
+      
       if (!response.ok) {
         throw new Error(result.message || "Failed to fetch dashboard data");
       }
@@ -63,8 +64,6 @@ const CompanyDashboardScreen = () => {
     queryKey: ["companyDashboard"],
     queryFn: fetchDashboardData,
   });
-
-  console.log('DashboardData:', dashboardData);
 
   const onRefresh = async () => {
     setRefreshing(true);

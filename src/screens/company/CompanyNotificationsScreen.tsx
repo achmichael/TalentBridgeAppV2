@@ -7,7 +7,7 @@ import { useTheme } from "../../contexts/ThemeContext"
 import { useQuery } from "@tanstack/react-query"
 import withAuth from "@/src/hoc/withAuth"
 
-// Mock data fetching function
+
 const fetchNotifications = async () => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -79,7 +79,7 @@ const CompanyNotificationsScreen = () => {
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await refetch()
+    // await refetch()
     setRefreshing(false)
   }
 

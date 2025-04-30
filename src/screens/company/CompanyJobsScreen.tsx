@@ -16,8 +16,9 @@ import type { StackNavigationProp } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
-import { useQuery } from "@tanstack/react-query"
 import withAuth from "@/src/hoc/withAuth"
+import { useDashboard } from "@/src/contexts/Company/DashboardContext"
+import LoadingScreen from "../common/LoadingScreen"
 
 type CompanyJobsScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
 
@@ -114,19 +115,11 @@ const CompanyJobsScreen = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [refreshing, setRefreshing] = useState(false)
-
-  const {
-    data: jobs,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["companyJobs", searchQuery, activeFilter],
-    queryFn: () => fetchJobs(searchQuery, activeFilter),
-  })
+  const { data, isLoading } = useDashboard();
+  const { jobs } = data || {};
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await refetch()
     setRefreshing(false)
   }
 
@@ -273,9 +266,7 @@ const CompanyJobsScreen = () => {
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.accent} />
-        </View>
+       <LoadingScreen />
       ) : jobs && jobs.length > 0 ? (
         <FlatList
           data={jobs}

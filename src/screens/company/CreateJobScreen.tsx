@@ -16,13 +16,17 @@ import { useNavigation } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import withAuth from "@/src/hoc/withAuth"
+import { poster } from "@/src/components/common/AutoHelper"
+import { baseUrl } from "@/src/config/baseUrl"
+import { useAuth } from "@/src/contexts/AuthContext"
+import AlertModal from "@/src/components/ModalAlert"
 
 const CreateJobScreen = () => {
   const navigation = useNavigation()
   const { theme } = useTheme()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Form state
+  const { token } = useAuth();
   const [title, setTitle] = useState("")
   const [department, setDepartment] = useState("")
   const [location, setLocation] = useState("")
@@ -34,9 +38,8 @@ const CreateJobScreen = () => {
   const [isRemote, setIsRemote] = useState(false)
   const [isUrgent, setIsUrgent] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
-
-  const handleSubmit = () => {
-    // Validate form
+  
+  const handleSubmit = async () => {
     if (!title || !department || !location || !description || !requirements || !benefits) {
       Alert.alert("Error", "Please fill in all required fields")
       return
@@ -44,16 +47,29 @@ const CreateJobScreen = () => {
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      Alert.alert("Success", "Job posting created successfully", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ])
-    }, 1500)
+    const { data: res, error } = await poster(`${baseUrl}/jobs`, { method: 'POST', headers: {
+      'Content-Type': "application/json",
+      'Authorization': `Bearer ${token || ''}`,
+    }, body: JSON.stringify({
+      title,
+      department,
+      location,
+      type,
+      salary,
+      description,
+      requirements,
+      benefits,
+      isRemote,
+      isUrgent,
+      isVisible,
+    })});
+
+    setIsSubmitting(false);
+
+    if (error) {
+      Alert.alert("Error", error)
+      return
+    }
   }
 
   const handleSaveDraft = () => {

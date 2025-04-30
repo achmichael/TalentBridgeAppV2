@@ -60,8 +60,9 @@ const RegisterScreen = () => {
     setIsLoading(true)
     try {
       await signUp(username, email, password, confirmPassword, role)
-    } catch (error) {
-      Alert.alert("Registration Failed", "Could not create account")
+    } catch (error: any) {
+      const errorMessage = error instanceof Error as any ? error?.username : error?.message || "Could not create account"
+      Alert.alert("Registration Failed", errorMessage)
     } finally {
       setIsLoading(false)
     }

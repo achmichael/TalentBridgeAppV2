@@ -1,282 +1,311 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { createContext, useState, useContext, useEffect } from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import * as WebBrowser from "expo-web-browser"
-import * as Google from "expo-auth-session/providers/google"
-import useLogin from "@/hooks/use-login"
-import useRegister from "@/hooks/use-register"
-import { redirectBasedOnRole } from "../components/common/navigation"
-import { AuthSessionRedirectUriOptions } from "expo-auth-session"
+import type React from "react";
+import { createContext, useState, useContext, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import useLogin from "@/hooks/use-login";
+import useRegister from "@/hooks/use-register";
+import { redirectBasedOnRole } from "../components/common/navigation";
+import { AuthSessionRedirectUriOptions } from "expo-auth-session";
+import { baseUrl } from "../config/baseUrl";
+import { redirectToAuth } from "../hoc/withAuth";
+import { navigationRef } from "@/App";
 
 // Pastikan browser ditutup setelah autentikasi
-WebBrowser.maybeCompleteAuthSession()
-
-// Bagian konfigurasi Google Auth
-// const googleConfig = {
-//   androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-//   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-//   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-//   expoClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-//   redirectUri: "https://c45b-118-99-125-4.ngrok-free.app",
-//   responseType: "code",
-//   // Anda tidak perlu menentukan redirectUri secara manual
-//   // ketika menggunakan useProxy: true
-//   scopes: ['profile', 'email', 'openid'],
-// }
+WebBrowser.maybeCompleteAuthSession();
 
 const googleAuthConfig = {
   clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  redirectUri: 'https://c45b-118-99-125-4.ngrok-free.app',
-  responseType: 'code',
-  scope: 'profile email',
+  redirectUri: "https://c45b-118-99-125-4.ngrok-free.app",
+  responseType: "code",
+  scope: "profile email",
 };
 
 const discovery = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenEndpoint: "https://oauth2.googleapis.com/token",
+  revocationEndpoint: "https://oauth2.googleapis.com/revoke",
 } as AuthSessionRedirectUriOptions;
 
 // Define user roles
-export type UserRole = "client" | "freelancer" | "company" | "admin"
+export type UserRole = "client" | "freelancer" | "company" | "admin";
 
 // Define user interface
 export interface User {
-  id: string
-  username: string
-  email: string
+  id: string;
+  username: string;
+  email: string;
   role: {
-    role_name: string
-  }
+    role_name: string;
+  };
 }
 
-// Define auth context interface
 interface AuthContextType {
-  token: string | null | undefined
-  isLoading: boolean
-  signIn: (username: string, password: string) => Promise<void>
+  token: string | null | undefined;
+  isLoading: boolean;
+  signIn: (username: string, password: string) => Promise<void>;
   signUp: (
     username: string,
     email: string,
     password: string,
     password_confirmation: string,
-    role: UserRole,
-  ) => Promise<void>
-  signOut: () => Promise<void>
-  signInWithGoogle: () => void
-  role: UserRole
-  user: User | null
-  logout: () => Promise<void>
+    role: UserRole
+  ) => Promise<void>;
+  signOut: () => Promise<void>;
+  signInWithGoogle: () => void;
+  role: UserRole;
+  user: User | null;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{
-  children: React.ReactNode
-  isNavReady: boolean
+  children: React.ReactNode;
+  isNavReady: boolean;
 }> = ({ children, isNavReady }) => {
-  const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<User | null>(null)
-  const [jwt, setJwt] = useState<string | null | undefined>(null)
-  const { login, isLoading: loginLoading } = useLogin()
-  const [role, setRole] = useState<UserRole>("client")
-  const { register, isLoading: registerLoading } = useRegister()
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [jwt, setJwt] = useState<string | null | undefined>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { login, isLoading: loginLoading } = useLogin();
+  const [role, setRole] = useState<UserRole>("client");
+  const { register, isLoading: registerLoading } = useRegister();
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    ...googleAuthConfig,
-  }, discovery);
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    {
+      ...googleAuthConfig,
+    },
+    discovery
+  );
 
-  // Di dalam komponen AuthProvider
-  useEffect(() => {
-    if (request) {
-      // Ini akan menampilkan URI redirect yang digunakan
-      console.log("Redirect URI yang digunakan:", request.redirectUri)
-      // Tambahkan URI ini ke Google Cloud Console
-    }
-  }, [request])
 
   // Efek untuk menangani respons Google Auth
   useEffect(() => {
     if (response?.type === "success") {
-      handleGoogleResponse(response)
+      handleGoogleResponse(response);
     } else if (response?.type === "error") {
-      console.error("Google auth error:", response.error)
+      console.error("Google auth error:", response.error);
     }
-  }, [response])
+  }, [response]);
 
   // Fungsi untuk menangani respons Google Auth
   const handleGoogleResponse = async (response: any) => {
     try {
-      if (response.type !== "success") return
+      if (response.type !== "success") return;
 
-      // Log respons lengkap untuk debugging
-      console.log("Google auth response:", response)
-
-      // Dapatkan token akses
-      const { authentication } = response
+      const { authentication } = response;
 
       if (!authentication) {
-        console.error("No authentication data received")
-        return
+        console.error("No authentication data received");
+        return;
       }
 
-      const accessToken = authentication.accessToken
-      console.log("Access token received:", accessToken ? "Yes" : "No")
+      const accessToken = authentication.accessToken;
+      console.log("Access token received:", accessToken ? "Yes" : "No");
 
-      // Dapatkan info pengguna dengan token
-      const userInfoResponse = await fetch("https://www.googleapis.com/userinfo/v2/me", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
+      const userInfoResponse = await fetch(
+        "https://www.googleapis.com/userinfo/v2/me",
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
 
       if (!userInfoResponse.ok) {
-        console.error("User info response status:", userInfoResponse.status)
-        throw new Error(`Failed to fetch user info: ${userInfoResponse.status}`)
+        console.error("User info response status:", userInfoResponse.status);
+        throw new Error(
+          `Failed to fetch user info: ${userInfoResponse.status}`
+        );
       }
 
-      const userData = await userInfoResponse.json()
-      console.log("User data received:", userData ? "Yes" : "No")
+      const userData = await userInfoResponse.json();
+      console.log("User data received:", userData ? "Yes" : "No");
 
-      // Buat objek pengguna
       const user: User = {
         id: userData.id || "google-user",
         username: userData.name || "Google User",
         email: userData.email || "no-email@example.com",
         role: {
-          role_name: "client", // Peran default untuk login Google
+          role_name: "client",
         },
-      }
+      };
 
-      // Simpan data autentikasi
-      await handleUserAuthenticated(accessToken, "client", user)
+      await handleUserAuthenticated(accessToken, "client", user);
     } catch (error) {
-      console.error("Error handling Google response:", error)
+      console.error("Error handling Google response:", error);
     }
-  }
+  };
 
   useEffect(() => {
     if (isNavReady && role && jwt) {
-      redirectBasedOnRole(role)
+      const validateToken = async () => {
+        try {
+          const response = await fetch(`${baseUrl}/verify-token`, {
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+            },
+          });
+  
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            signOut();
+            console.log('error verifikasi token', data.message);
+            redirectToAuth(navigationRef);
+          }
+
+          setIsAuthenticated(true);
+          redirectBasedOnRole(role);
+        } catch (error) {
+          signOut();
+          redirectToAuth(navigationRef);
+          setIsAuthenticated(false);
+        } finally {
+          setIsLoading(false);
+          setIsAuthenticated(false);
+        }
+      }
+
+      validateToken();
     }
-  }, [jwt, role, isNavReady])
+  }, [jwt, role, isNavReady]);
 
   useEffect(() => {
     const loadJwt = async () => {
       try {
-        const jwtJson = await AsyncStorage.getItem("@jwt")
-        const role = await AsyncStorage.getItem("@role")
-        const userJson = await AsyncStorage.getItem("@user")
+        const jwtJson = await AsyncStorage.getItem("@jwt");
+        const role = await AsyncStorage.getItem("@role");
+        const userJson = await AsyncStorage.getItem("@user");
 
-        if (jwtJson && role && jwtJson !== null && role !== null && userJson !== null) {
+        if (
+          jwtJson &&
+          role &&
+          jwtJson !== null &&
+          role !== null &&
+          userJson !== null
+        ) {
           try {
-            const parsedJwt = JSON.parse(jwtJson)
-            setJwt(parsedJwt)
-            const parsedRole = JSON.parse(role)
-            setRole(parsedRole as UserRole)
-            const parsedUser = JSON.parse(userJson) as User
-            setUser(parsedUser)
+            const parsedJwt = JSON.parse(jwtJson);
+            setJwt(parsedJwt);
+            const parsedRole = JSON.parse(role);
+            setRole(parsedRole as UserRole);
+            const parsedUser = JSON.parse(userJson) as User;
+            setUser(parsedUser);
           } catch (parseError) {
-            console.error("Error parsing stored data:", parseError)
-            await AsyncStorage.removeItem("@jwt")
-            await AsyncStorage.removeItem("@role")
-            await AsyncStorage.removeItem("@user")
+            console.error("Error parsing stored data:", parseError);
+            await AsyncStorage.removeItem("@jwt");
+            await AsyncStorage.removeItem("@role");
+            await AsyncStorage.removeItem("@user");
           }
         }
       } catch (error) {
-        console.error("Failed to load Jwt from storage", error)
+        console.error("Failed to load Jwt from storage", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    loadJwt()
-  }, [])
+    loadJwt();
+  }, []);
 
-  const handleUserAuthenticated = async (token: string | undefined, role: UserRole, userData: User) => {
-    await AsyncStorage.setItem("@jwt", JSON.stringify(token))
-    await AsyncStorage.setItem("@role", JSON.stringify(role))
-    await AsyncStorage.setItem("@user", JSON.stringify(userData))
-    setJwt(token)
-    setRole(role)
-    setUser(userData)
-  }
+  const handleUserAuthenticated = async (
+    token: string | undefined,
+    role: UserRole,
+    userData: User
+  ) => {
+    await AsyncStorage.setItem("@jwt", JSON.stringify(token));
+    await AsyncStorage.setItem("@role", JSON.stringify(role));
+    await AsyncStorage.setItem("@user", JSON.stringify(userData));
+    setJwt(token);
+    setRole(role);
+    setUser(userData);
+  };
 
   const signIn = async (username: string, password: string) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const result = await login(username, password)
+      const result = await login(username, password);
       if (result.access_token) {
-        await AsyncStorage.setItem("@jwt", JSON.stringify(result.access_token))
-        await AsyncStorage.setItem("@role", JSON.stringify(result?.user.role.role_name || "client"))
-        await AsyncStorage.setItem("@user", JSON.stringify(result?.user))
+        await AsyncStorage.setItem("@jwt", JSON.stringify(result.access_token));
+        await AsyncStorage.setItem(
+          "@role",
+          JSON.stringify(result?.user.role.role_name || "client")
+        );
+        await AsyncStorage.setItem("@user", JSON.stringify(result?.user));
 
-        setJwt(result.access_token)
-        setRole(result?.user.role.role_name || "client")
-        setUser(result?.user)
+        setJwt(result.access_token);
+        setRole(result?.user.role.role_name || "client");
+        setUser(result?.user);
       }
     } catch (error) {
-      console.log("Sign in failed", error)
-      throw error
+      console.log("Sign in failed", error);
+      throw error;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const signUp = async (
     username: string,
     email: string,
     password: string,
     password_confirmation: string,
-    role: UserRole,
+    role: UserRole
   ) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const result = await register(username, email, password, password_confirmation, role)
+      const result = await register(
+        username,
+        email,
+        password,
+        password_confirmation,
+        role
+      );
       if (result.access_token && !registerLoading) {
-        await AsyncStorage.setItem("@jwt", JSON.stringify(result?.access_token))
-        await AsyncStorage.setItem("@role", JSON.stringify(result?.user.role.role_name || "client"))
-        await AsyncStorage.setItem("@user", JSON.stringify(result?.user))
-        setJwt(result.access_token)
-        setRole(role || result?.user.role.role_name || "client")
-        setUser(result.user)
+        await AsyncStorage.setItem(
+          "@jwt",
+          JSON.stringify(result?.access_token)
+        );
+        await AsyncStorage.setItem(
+          "@role",
+          JSON.stringify(result?.user.role.role_name || "client")
+        );
+        await AsyncStorage.setItem("@user", JSON.stringify(result?.user));
+        setJwt(result.access_token);
+        setRole(role || result?.user.role.role_name || "client");
+        setUser(result.user);
       }
-    } catch (error) {
-      console.log("Sign up failed", error)
-      throw error
+    } catch (error: any) {
+      console.log("Sign up failed", error.username);
+      throw error;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const signOut = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      setJwt(null)
-      setUser(null)
-      await AsyncStorage.removeItem("@jwt")
-      await AsyncStorage.removeItem("@role")
-      await AsyncStorage.removeItem("@user")
+      setJwt(null);
+      setUser(null);
+      await AsyncStorage.removeItem("@jwt");
+      await AsyncStorage.removeItem("@role");
+      await AsyncStorage.removeItem("@user");
     } catch (error) {
-      console.error("Sign out failed", error)
+      console.error("Sign out failed", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  // Fungsi untuk login Google yang lebih sederhana
   const signInWithGoogle = () => {
     if (!request) {
-      console.error("Google Auth request not initialized")
-      return
+      console.error("Google Auth request not initialized");
+      return;
     }
-
-    console.log("Starting Google authentication...")
-    console.log('request', request)
-    console.log('response', response)
-    // Tampilkan dialog login Google
-    promptAsync()
-  }
+    promptAsync();
+  };
 
   return (
     <AuthContext.Provider
@@ -294,13 +323,13 @@ export const AuthProvider: React.FC<{
     >
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
-}
+  return context;
+};

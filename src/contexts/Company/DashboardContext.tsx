@@ -8,11 +8,9 @@ import { Employee } from "../../types/Employee";
 import LoadingScreen from "../../screens/common/LoadingScreen";
 
 interface DashboardData {
-  data: {
-    jobs: Job[];
-    applications: Application[];
-    employees: Employee[];
-  };
+  jobs: Job[];
+  applications: Application[];
+  employees: Employee[];
 }
 
 interface DashboardContextType {
@@ -36,19 +34,18 @@ export const DashboardProvider: React.FC<{
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!token) return;
-
       try {
         const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            id: user?.id
-          })
+            id: user?.id,
+          }),
         });
-        
+
         const result = await response.json();
         if (!response.ok) {
           throw new Error(result.message || "Failed to fetch dashboard data");
@@ -69,29 +66,32 @@ export const DashboardProvider: React.FC<{
   }, [token]);
 
   useEffect(() => {
-    if (!searchQuery) return; 
+    if (!searchQuery) return;
 
     if (data) {
-      const { jobs, applications, employees } = data.data;
+      const { jobs, applications, employees } = data;
 
       const filteredJobs = jobs.filter((job: Job) =>
         job.post.title?.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      const filteredApplications = applications.filter((application: Application) =>
-        application.applicant?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      const filteredApplications = applications.filter(
+        (application: Application) =>
+          application.applicant?.name
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase())
       );
 
       const filteredEmployees = employees.filter((employee: Employee) =>
-        employee.employee?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        employee.employee?.name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase())
       );
 
       setData({
-        data: {
-          jobs: filteredJobs,
-          applications: filteredApplications,
-          employees: filteredEmployees,
-        },
+        jobs: filteredJobs,
+        applications: filteredApplications,
+        employees: filteredEmployees,
       });
     }
   }, [searchQuery, data]);
@@ -109,8 +109,7 @@ export const DashboardProvider: React.FC<{
 
 export const useDashboard = () => {
   const context = useContext(DashboardContext);
-  if (context === undefined) throw new Error("useDashboard must be used within a DashboardProvider");
+  if (context === undefined)
+    throw new Error("useDashboard must be used within a DashboardProvider");
   return context;
-}
-
-
+};
