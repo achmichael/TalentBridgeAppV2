@@ -167,6 +167,7 @@ export const AuthProvider: React.FC<{
         }
       }
 
+      
       validateToken();
     }
   }, [jwt, role, isNavReady]);
