@@ -1,25 +1,24 @@
 "use client";
 
 import "react-native-gesture-handler";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import * as Font from "expo-font";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
-import { createNavigationContainerRef, NavigationContainer } from "@react-navigation/native";
+import {  NavigationContainer } from "@react-navigation/native";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { ThemeProvider } from "./src/contexts/ThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { navigationRef } from "./src/components/common/navigation";
 
 // Prevent auto hiding of splash screen
 SplashScreen.preventAutoHideAsync();
 
 // Create a client for React Query
 const queryClient = new QueryClient();
-
-export const navigationRef = createNavigationContainerRef();
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);

@@ -3,20 +3,11 @@ import { View, ActivityIndicator } from "react-native";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { baseUrl } from "@/src/config/baseUrl";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { CommonActions } from "@react-navigation/native";
-import { navigationRef } from "@/App";
+import { redirectToAuth } from "../components/common/navigation";
+import { navigationRef } from "../components/common/navigation";
 import LoadingScreen from "../screens/common/LoadingScreen";
 
-export const redirectToAuth = (navigation: any) => {
-  if (!navigation) {
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: "Auth" }],
-      })
-    );
-  }
-};
+
 
 const withAuth = (WrappedComponent: React.ComponentType<any>) => {
   const WithAuth = (props: any) => {
@@ -43,6 +34,7 @@ const withAuth = (WrappedComponent: React.ComponentType<any>) => {
 
           if (!response.ok || !data.success) {
             logout();
+            console.log('Navigaasi ke auth dari HOC');
             redirectToAuth(navigationRef);
           }
         } catch (error) {

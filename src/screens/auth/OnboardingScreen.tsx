@@ -4,7 +4,8 @@ import { useRef, useState } from "react"
 import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, Image, Animated } from "react-native"
 import { useTheme } from "../../contexts/ThemeContext"
 import Button from "../../components/common/Button"
-import { navigationRef } from "@/App"
+import { navigationRef } from "@/src/components/common/navigation"
+
 
 const { width, height } = Dimensions.get("window")
 
