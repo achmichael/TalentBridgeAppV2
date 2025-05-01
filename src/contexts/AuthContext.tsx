@@ -56,6 +56,7 @@ interface AuthContextType {
   role: UserRole;
   user: User | null;
   logout: () => Promise<void>;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +71,7 @@ export const AuthProvider: React.FC<{
   const { login, isLoading: loginLoading } = useLogin();
   const [role, setRole] = useState<UserRole>("client");
   const { register, isLoading: registerLoading } = useRegister();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest(
     {
@@ -153,24 +155,27 @@ export const AuthProvider: React.FC<{
           }
 
           if (isNavReady){
-            console.log('Navigation is ready, redirecting...');
+            setIsAuthenticated(true);
+            setIsLoading(false);
             setTimeout(() => {
               redirectBasedOnRole(role);
             }, 100);
           }
         } catch (error) {
           signOut();
+          setIsLoading(false);
+          setIsAuthenticated(false);
         } finally {
+          setIsAuthenticated(false);
           setIsLoading(false);
         }
       }
-      // terlalu banyak validasi token di bagian AuthContext dan HOC
       validateToken();
     }
   }, [jwt, role, isNavReady]);
 
   useEffect(() => {
-    const loadJwt = async () => {
+    const loadCredentials = async () => {
       try {
         const jwtJson = await AsyncStorage.getItem("@jwt");
         const role = await AsyncStorage.getItem("@role");
@@ -204,7 +209,7 @@ export const AuthProvider: React.FC<{
       }
     };
 
-    loadJwt();
+    loadCredentials();
   }, []);
 
   const handleUserAuthenticated = async (
@@ -317,6 +322,7 @@ export const AuthProvider: React.FC<{
         role,
         user,
         logout: signOut,
+        isAuthenticated
       }}
     >
       {children}

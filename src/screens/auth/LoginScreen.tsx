@@ -39,7 +39,7 @@ const LoginScreen = () => {
     setIsLoading(true)
     try {
       await signIn(username, password)
-      redirectBasedOnRole(role)
+      // redirectBasedOnRole(role)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Could not sign in";
       Alert.alert("Login Failed", errorMessage)

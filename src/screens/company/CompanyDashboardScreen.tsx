@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -28,7 +28,10 @@ const CompanyDashboardScreen = () => {
   const navigation = useNavigation<CompanyDashboardScreenNavigationProp>();
   const { theme } = useTheme();
   const { user, token } = useAuth();
+  const [totalApplicants, setTotalApplicants] = useState(0);
+  const [totalTeams, setTotalTeams] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
   const fetchDashboardData = async () => {
     try {
       const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
@@ -47,23 +50,29 @@ const CompanyDashboardScreen = () => {
       if (!response.ok) {
         throw new Error(result.message || "Failed to fetch dashboard data");
       }
-
+      console.log("Dashboard Data:", result.data);
       return result.data;
     } catch (error) {
-      console.error("Error in fetchDashboardData:", error);
+      console.error("Error in fetchdata:", error);
       throw error;
     }
   };
 
-
   const {
-    data: dashboardData,
+    data,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ["companyDashboard"],
     queryFn: fetchDashboardData,
   });
+
+  useEffect(() => {
+    if (data.length > 0){
+      setTotalApplicants(data.reduce((total: number, job: any) => total + (job.post.applications_count || 0), 0));
+      setTotalTeams(data.reduce((total: number, job: any) => total + (job.user?.company?.employees_count || 0), 0));
+    }
+  }, [data]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -113,18 +122,18 @@ const CompanyDashboardScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
-          <Text style={styles.statsNumber}>{dashboardData?.activeJobs || 0}</Text>
+          <Text style={styles.statsNumber}>{data?.length || 0}</Text>
           <Text style={styles.statsLabel}>Active Jobs</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
           <Text style={styles.statsNumber}>
-            {dashboardData?.totalApplicants || 0}
+            {totalApplicants}
           </Text>
           <Text style={styles.statsLabel}>Applicants</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.secondary }]}>
           <Text style={styles.statsNumber}>
-            {dashboardData?.teamMembers || 0}
+            {totalTeams}
           </Text>
           <Text style={styles.statsLabel}>Team</Text>
         </View>
@@ -229,7 +238,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.recentApplicants?.map((applicant: any) => (
+        {data?.recentApplicants?.map((applicant: any) => (
           <TouchableOpacity
             key={applicant.id}
             style={[styles.applicantCard, { backgroundColor: theme.card }]}
@@ -286,7 +295,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.map((job: any) => (
+        {data?.map((job: any) => (
           <TouchableOpacity
             key={job.id}
             style={[styles.jobCard, { backgroundColor: theme.card }]}
