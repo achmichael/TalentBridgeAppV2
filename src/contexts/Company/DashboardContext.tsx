@@ -1,21 +1,16 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { useTheme } from "../ThemeContext";
+import { createContext, useContext, useState, useMemo } from "react";
+import { QueryObserverResult, useQuery } from "@tanstack/react-query";
 import { baseUrl } from "../../config/baseUrl";
 import { useAuth } from "../AuthContext";
-import { Job } from "../../types/Job";
-import { Application } from "../../types/Application";
-import { Employee } from "../../types/Employee";
 import LoadingScreen from "../../screens/common/LoadingScreen";
-
-interface DashboardData {
-  jobs: Job[];
-  applications: Application[];
-  employees: Employee[];
-}
 
 interface DashboardContextType {
   isLoading: boolean;
-  data: DashboardData | null;
+  data: any;
+  refetch: () => Promise<QueryObserverResult<any, Error>>;
+  filteredData: any;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(
@@ -25,83 +20,94 @@ const DashboardContext = createContext<DashboardContextType | undefined>(
 export const DashboardProvider: React.FC<{
   children: React.ReactNode;
   searchQuery?: string;
-}> = ({ children, searchQuery }) => {
-  const { theme } = useTheme();
+}> = ({ children }) => {
   const { token, user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!token) return;
-      try {
-        const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: user?.id,
-          }),
-        });
-
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.message || "Failed to fetch dashboard data");
-        }
-
-        setData(result.data);
-        return result.data;
-      } catch (error) {
-        setData(null);
-        console.error("Error fetching dashboard data:", error);
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [token]);
-
-  useEffect(() => {
-    if (!searchQuery) return;
-
-    if (data) {
-      const { jobs, applications, employees } = data;
-
-      const filteredJobs = jobs.filter((job: Job) =>
-        job.post.title?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-      const filteredApplications = applications.filter(
-        (application: Application) =>
-          application.applicant?.name
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase())
-      );
-
-      const filteredEmployees = employees.filter((employee: Employee) =>
-        employee.employee?.name
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      );
-
-      setData({
-        jobs: filteredJobs,
-        applications: filteredApplications,
-        employees: filteredEmployees,
+  const fetchDashboardData = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: user?.id,
+        }),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to fetch dashboard data");
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      throw error;
     }
-  }, [searchQuery, data]);
+  };
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["dashboardCompanyData"],
+    queryFn: fetchDashboardData,
+  });
+
+  const filteredData = useMemo(() => {
+    if (!data || !searchQuery.trim()) return data;
+
+    return data.filter((item: any) => {
+      const query = searchQuery.toLowerCase();
+
+      const title =
+        typeof item?.post?.title === "string"
+          ? item.post.title.toLowerCase()
+          : "";
+      const description =
+        typeof item?.post?.description === "string"
+          ? item.post.description.toLowerCase()
+          : "";
+
+      let company = "";
+      if (item?.post?.user?.company?.name) {
+        company =
+          typeof item.post.user.company.name === "string"
+            ? item.post.user.company.name.toLowerCase()
+            : "";
+      }
+
+      const address =
+        typeof item?.post?.user?.company?.address === "string"
+          ? item.post.user.company.address.toLowerCase()
+          : "";
+
+      return (
+        title.includes(query) ||
+        description.includes(query) ||
+        company.includes(query) ||
+        address.includes(query)
+      );
+    });
+  }, [data, searchQuery]);
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
   return (
-    <DashboardContext.Provider value={{ isLoading, data }}>
+    <DashboardContext.Provider
+      value={{
+        isLoading,
+        data,
+        refetch,
+        filteredData,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
       {children}
     </DashboardContext.Provider>
   );

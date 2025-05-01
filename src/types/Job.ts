@@ -1,16 +1,16 @@
 import { Post } from "./Post";
 
-export type Job = {
+export interface Job {
   id: string;
+  post_id: string;
+  number_of_employee: number;
+  duration: number;
+  status: 'open' | 'closed'; // asumsikan hanya dua status
+  type_job: 'full-time' | 'part-time' | 'contract'; // sesuaikan jika ada jenis lain
+  type_salary: 'fixed' | 'flexible'; // sesuai dari data
+  system: 'wfo' | 'wfh' | 'hybrid'; // tambahkan jika ada opsi lain
+  created_at: string;
+  updated_at: string;
   post: Post;
-  minExperience: number;
-  numberOffEmployees: number;
-  duration: number; // in month e.g 3 month
-  status: "open" | "closed";
-  typeJob: "full-time" | "part-time" | "contract";
-  type_salary: "fixed" | "flexible";
-  system: "remote" | "onsite" | "hybrid";
-  created_at: Date;
-  updated_at: Date;
-};
+}
 

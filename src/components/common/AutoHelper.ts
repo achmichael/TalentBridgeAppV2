@@ -26,12 +26,12 @@ const poster = async (url: string, options: RequestInit = {}) => {
     });
 
     const result = await response.json();
-
+    console.log('post response', result);
     if (!response.ok) {
-      throw new Error(result.message || result.error || "An error occurred");
+      throw new Error(result.message || result.errors || "An error occurred");
     }
 
-    return { data: result.data, error: null };
+    return { data: result, error: null };
   } catch (error: any) {
     return { data: null, error: error.message || "Post failed" };
   }
