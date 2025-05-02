@@ -14,6 +14,7 @@ import JobDetailsScreen from "../screens/company/JobDetailsScreen";
 import ApplicantProfileScreen from "../screens/company/ApplicantProfileScreen";
 import CreateJobScreen from "../screens/company/CreateJobScreen";
 import { DashboardProvider } from "../contexts/Company/DashboardContext";
+import AddEmployeeScreen from "../screens/company/AddEmployeeScreen";
 
 export type CompanyStackParamList = {
   CompanyTabs: undefined;
@@ -21,6 +22,7 @@ export type CompanyStackParamList = {
   ApplicantProfile: { applicantId: string };
   CompanySettings: undefined;
   CreateJob: undefined;
+  CreateTeam: undefined;
 };
 
 export type CompanyTabParamList = {
@@ -121,6 +123,7 @@ const CompanyNavigator = () => {
       />
       <Stack.Screen name="CreateJob" component={CreateJobScreen} />
       <Stack.Screen name="CompanySettings" component={CompanySettingsScreen} />
+      <Stack.Screen name="CreateTeam" component={AddEmployeeScreen} />
     </Stack.Navigator>
   );
 };

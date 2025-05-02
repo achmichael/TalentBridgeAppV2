@@ -96,8 +96,8 @@ export const DashboardProvider: React.FC<{
     const filteredTeams = data?.user?.company?.employees?.filter(
       (person: any) => {
         const name =
-          typeof person?.username === "string"
-            ? person.username.toLowerCase()
+          typeof person?.employee?.username === "string"
+            ? person?.employee?.username.toLowerCase()
             : "";
         const position =
           typeof person?.position === "string"

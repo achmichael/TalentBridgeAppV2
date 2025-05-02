@@ -14,10 +14,9 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
-import { useQuery } from "@tanstack/react-query"
-import { Job } from "@/src/types/Job"
 import withAuth from "@/src/hoc/withAuth"
 import { useDashboard } from "@/src/contexts/Company/DashboardContext"
+import { navigationRef } from "@/src/components/common/navigation"
 
 const CompanyTeamScreen = () => {
   const { theme } = useTheme()
@@ -46,17 +45,17 @@ const CompanyTeamScreen = () => {
     <TouchableOpacity style={[styles.memberCard, { backgroundColor: theme.card }]} activeOpacity={0.7}>
       <Image source={{ uri: item.avatar || 'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dXNlcnxlbnwwfHwwfHx8MA%3D%3D' }} style={styles.avatar} />
       <View style={styles.memberInfo}>
-        <Text style={[styles.memberName, { color: theme.text }]}>{item.username}</Text>
-        <Text style={[styles.memberPosition, { color: theme.text + "80" }]}>{item.position}</Text>
+        <Text style={[styles.memberName, { color: theme.text , textTransform: 'capitalize'}]}>{item?.employee?.username}</Text>
+        {/* <Text style={[styles.memberPosition, { color: getStatusColor(item?.status) + "90", textTransform: 'capitalize' }]}>{item.status}</Text> */}
         <View style={styles.memberDetails}>
           <View style={styles.memberDetail}>
             <Ionicons name="briefcase-outline" size={14} color={theme.text + "80"} />
-            <Text style={[styles.memberDetailText, { color: theme.text + "80" }]}>{item.department}</Text>
+            <Text style={[styles.memberDetailText, { color: theme.text + "80" }]}>{item.position}</Text>
           </View>
           <View style={styles.memberDetail}>
             <Ionicons name="calendar-outline" size={14} color={theme.text + "80"} />
             <Text style={[styles.memberDetailText, { color: theme.text + "80" }]}>
-              Joined {new Date(item.joinDate).toLocaleDateString()}
+              Joined {new Date(item.created_at).toLocaleDateString()}
             </Text>
           </View>
         </View>
@@ -76,7 +75,7 @@ const CompanyTeamScreen = () => {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>Team Members</Text>
-        <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.accent }]}>
+        <TouchableOpacity onPress={() => navigationRef.navigate('CreateTeam' as never)} style={[styles.addButton, { backgroundColor: theme.accent }]}>
           <Ionicons name="add" size={20} color="#FFFFFF" />
           <Text style={styles.addButtonText}>Add Member</Text>
         </TouchableOpacity>
@@ -246,7 +245,6 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontFamily: "Poppins-Medium",
-    marginBottom: 2,
   },
   memberPosition: {
     fontSize: 14,
@@ -254,7 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   memberDetails: {
-    flexDirection: "row",
+    flexDirection: "column",
     flexWrap: "wrap",
   },
   memberDetail: {
@@ -271,6 +269,7 @@ const styles = StyleSheet.create({
   memberActions: {
     flexDirection: "column",
     justifyContent: "space-between",
+    rowGap: 5,
     height: 60,
   },
   actionButton: {
