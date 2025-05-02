@@ -15,9 +15,9 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useQuery } from "@tanstack/react-query"
+import { Job } from "@/src/types/Job"
 import withAuth from "@/src/hoc/withAuth"
 import { useDashboard } from "@/src/contexts/Company/DashboardContext"
-import { Job } from "@/src/types/Job"
 
 const CompanyTeamScreen = () => {
   const { theme } = useTheme()
@@ -31,7 +31,7 @@ const CompanyTeamScreen = () => {
     setRefreshing(false)
   }
 
-  const teamsData = filteredData.some((item: any) => item && item?.post?.user?.company?.employees);
+  const teamsData = filteredData.user?.company?.employees;
 
   const departments = teamsData
     ? ["All", ...Array.from(new Set(teamsData.map((member: any) => member.position)))]
@@ -44,9 +44,9 @@ const CompanyTeamScreen = () => {
 
   const renderTeamMember = ({ item }: { item: any }) => (
     <TouchableOpacity style={[styles.memberCard, { backgroundColor: theme.card }]} activeOpacity={0.7}>
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
+      <Image source={{ uri: item.avatar || 'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dXNlcnxlbnwwfHwwfHx8MA%3D%3D' }} style={styles.avatar} />
       <View style={styles.memberInfo}>
-        <Text style={[styles.memberName, { color: theme.text }]}>{item.name}</Text>
+        <Text style={[styles.memberName, { color: theme.text }]}>{item.username}</Text>
         <Text style={[styles.memberPosition, { color: theme.text + "80" }]}>{item.position}</Text>
         <View style={styles.memberDetails}>
           <View style={styles.memberDetail}>

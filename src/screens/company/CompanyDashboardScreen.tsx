@@ -28,7 +28,7 @@ type CompanyDashboardScreenNavigationProp =
 const CompanyDashboardScreen = () => {
   const navigation = useNavigation<CompanyDashboardScreenNavigationProp>();
   const { theme } = useTheme();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [totalApplicants, setTotalApplicants] = useState(0);
   const [totalTeams, setTotalTeams] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -90,7 +90,7 @@ const CompanyDashboardScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
-          <Text style={styles.statsNumber}>{data?.filter((job: any) => job.status === 'open').length || 0}</Text>
+          <Text style={styles.statsNumber}>{data?.jobs?.filter((job: any) => job.status === 'open').length || 0}</Text>
           <Text style={styles.statsLabel}>Active Jobs</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
@@ -206,7 +206,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {data?.map((job: Job) =>
+        {data?.jobs?.map((job: Job) =>
           job?.post?.applications?.map((applicant: Application) => (
             <TouchableOpacity
               key={applicant.id}
@@ -265,7 +265,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {data?.map((job: Job) => (
+        {data?.jobs?.map((job: Job) => (
           <TouchableOpacity
             key={job.id}
             style={[styles.jobCard, { backgroundColor: theme.card }]}

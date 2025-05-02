@@ -43,7 +43,7 @@ export const DashboardProvider: React.FC<{
       if (!response.ok) {
         throw new Error(result.message || "Failed to fetch dashboard data");
       }
-
+      console.log("Dashboard data:", result.data);
       return result.data;
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -59,13 +59,14 @@ export const DashboardProvider: React.FC<{
   const filteredData = useMemo(() => {
     if (!data || !searchQuery.trim()) return data;
 
-    return data.filter((item: any) => {
-      const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase();
 
+    const filteredJobs = data?.jobs?.filter((item: any) => {
       const title =
         typeof item?.post?.title === "string"
           ? item.post.title.toLowerCase()
           : "";
+
       const description =
         typeof item?.post?.description === "string"
           ? item.post.description.toLowerCase()
@@ -91,6 +92,33 @@ export const DashboardProvider: React.FC<{
         address.includes(query)
       );
     });
+
+    const filteredTeams = data?.user?.company?.employees?.filter(
+      (person: any) => {
+        const name =
+          typeof person?.username === "string"
+            ? person.username.toLowerCase()
+            : "";
+        const position =
+          typeof person?.position === "string"
+            ? person.position.toLowerCase()
+            : "";
+
+        return name.includes(query) || position.includes(query);
+      }
+    );
+
+    return {
+      ...data,
+      jobs: filteredJobs,
+      user: {
+        ...data?.user,
+        company: {
+          ...data?.user?.company,
+          employees: filteredTeams,
+        },
+      },
+    };
   }, [data, searchQuery]);
 
   if (isLoading) {

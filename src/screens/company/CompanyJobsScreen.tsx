@@ -179,9 +179,9 @@ const CompanyJobsScreen = () => {
 
       {isLoading ? (
        <LoadingScreen />
-      ) : filteredData && filteredData.length > 0 ? (
+      ) : filteredData?.jobs && filteredData?.jobs?.length > 0 ? (
         <FlatList
-          data={filteredData}
+          data={filteredData.jobs}
           renderItem={renderJobItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.jobsList}
