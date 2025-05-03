@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,74 +8,143 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Switch,
   Alert,
   ActivityIndicator,
-} from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { Ionicons } from "@expo/vector-icons"
-import { useTheme } from "../../contexts/ThemeContext"
-import withAuth from "@/src/hoc/withAuth"
-import { poster } from "@/src/components/common/AutoHelper"
-import { baseUrl } from "@/src/config/baseUrl"
-import { useAuth } from "@/src/contexts/AuthContext"
-import AlertModal from "@/src/components/ModalAlert"
+  Modal,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../contexts/ThemeContext";
+import withAuth from "@/src/hoc/withAuth";
+import { poster } from "@/src/components/common/AutoHelper";
+import { baseUrl } from "@/src/config/baseUrl";
+import { useAuth } from "@/src/contexts/AuthContext";
+import AlertModal from "@/src/components/ModalAlert";
+import { Picker } from "@react-native-picker/picker";
+import { AlertType } from "@/src/components/ModalAlert";
+import useFetch from "@/hooks/use-fetch";
+import LoadingScreen from "../common/LoadingScreen";
 
 const CreateJobScreen = () => {
-  const navigation = useNavigation()
-  const { theme } = useTheme()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const navigation = useNavigation();
+  const { theme } = useTheme();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuth();
-  const [title, setTitle] = useState("")
-  const [department, setDepartment] = useState("")
-  const [location, setLocation] = useState("")
-  const [type, setType] = useState("Full-time")
-  const [salary, setSalary] = useState("")
-  const [description, setDescription] = useState("")
-  const [requirements, setRequirements] = useState("")
-  const [benefits, setBenefits] = useState("")
-  const [isRemote, setIsRemote] = useState(false)
-  const [isUrgent, setIsUrgent] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
-  
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [titleModal, setTitleModal] = useState<string>("");
+  const [messageModal, setMessageModal] = useState<string>("");
+  const [typeModal, setTypeModal] = useState<string>("");
+
+  // Post fields
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [levelId, setLevelId] = useState(1);
+  const [requiredSkills, setRequiredSkills] = useState("");
+  const [minExperienceYears, setMinExperienceYears] = useState("");
+  const [categoryId, setCategoryId] = useState(1);
+
+  // Job fields
+  const [numberOfEmployee, setNumberOfEmployee] = useState("");
+  const [duration, setDuration] = useState("");
+  const [status, setStatus] = useState<"open" | "closed">("open");
+  const [typeJob, setTypeJob] = useState<
+    "full-time" | "part-time" | "contract"
+  >("full-time");
+  const [typeSalary, setTypeSalary] = useState<"fixed" | "flexible">("fixed");
+  const [system, setSystem] = useState<"wfo" | "wfh" | "hybrid">("wfo");
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showLevelPicker, setShowLevelPicker] = useState(false);
+  const [levels, setLevels] = useState([
+    { id: 1, name: "Entry Level" },
+    { id: 2, name: "Mid Level" },
+    { id: 3, name: "Expert Level" },
+  ]);
+
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
+
+  const { data, loading } = useFetch(`${baseUrl}/categories`);
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const typed = data as { id: number; category_name: string }[];
+      setCategories(
+        typed.map(({ id, category_name }) => ({
+          id,
+          name: category_name,
+        }))
+      );
+    }
+  }, [data]);
+
   const handleSubmit = async () => {
-    if (!title || !department || !location || !description || !requirements || !benefits) {
-      Alert.alert("Error", "Please fill in all required fields")
-      return
+    if (
+      !title ||
+      !description ||
+      !price ||
+      !requiredSkills ||
+      !minExperienceYears ||
+      !numberOfEmployee ||
+      !duration
+    ) {
+      Alert.alert("Error", "Please fill in all required fields");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
-    const { data: res, error } = await poster(`${baseUrl}/jobs`, { method: 'POST', headers: {
-      'Content-Type': "application/json",
-      'Authorization': `Bearer ${token || ''}`,
-    }, body: JSON.stringify({
-      title,
-      department,
-      location,
-      type,
-      salary,
+    const formattedSkills =
+      typeof requiredSkills === "string"
+        ? requiredSkills.split(",").map((skill) => skill.trim())
+        : requiredSkills;
+
+    const jobData = {
+      job_title: title,
       description,
-      requirements,
-      benefits,
-      isRemote,
-      isUrgent,
-      isVisible,
-    })});
+      price: Number(price),
+      level_id: levelId,
+      category_id: categoryId,
+      required_skills: JSON.stringify(formattedSkills),
+      min_experience_years: Number(minExperienceYears),
+      number_of_employee: Number(numberOfEmployee),
+      duration: Number(duration),
+      status,
+      type_job: typeJob,
+      type_salary: typeSalary,
+      system,
+    };
+
+    const { error, data } = await poster(`${baseUrl}/jobs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token || ""}`,
+      },
+      body: JSON.stringify(jobData),
+    });
 
     setIsSubmitting(false);
 
     if (error) {
-      Alert.alert("Error", error)
-      return
+      setShowModal(true);
+      setTitleModal("error");
+      setTypeModal("error");
+      setMessageModal(error);
+      return;
     }
-  }
+
+    setShowModal(true);
+    setTypeModal("success");
+    setTitleModal("Success");
+    setMessageModal(data.message);
+  };
 
   const handleSaveDraft = () => {
     if (!title) {
-      Alert.alert("Error", "Please enter at least a job title")
-      return
+      Alert.alert("Error", "Please enter at least a job title");
+      return;
     }
 
     Alert.alert("Success", "Job posting saved as draft", [
@@ -83,25 +152,46 @@ const CreateJobScreen = () => {
         text: "OK",
         onPress: () => navigation.goBack(),
       },
-    ])
+    ]);
+  };
+
+  if (loading) {
+    return <LoadingScreen />;
   }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <AlertModal
+        visible={showModal}
+        type={typeModal as AlertType}
+        title={titleModal}
+        message={messageModal}
+        onClose={() => setShowModal(false)}
+      />
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Create Job Posting</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Create Job Posting
+        </Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Post Details Section */}
         <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Job Details</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Post Details
+          </Text>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Job Title *</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Job Title *
+            </Text>
             <TextInput
               style={[
                 styles.input,
@@ -119,108 +209,9 @@ const CreateJobScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Department *</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.card,
-                  color: theme.text,
-                  borderColor: theme.border,
-                },
-              ]}
-              placeholder="e.g. Engineering"
-              placeholderTextColor={theme.text + "60"}
-              value={department}
-              onChangeText={setDepartment}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Location *</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.card,
-                  color: theme.text,
-                  borderColor: theme.border,
-                },
-              ]}
-              placeholder="e.g. San Francisco, CA"
-              placeholderTextColor={theme.text + "60"}
-              value={location}
-              onChangeText={setLocation}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Job Type *</Text>
-            <View style={styles.jobTypeContainer}>
-              {["Full-time", "Part-time", "Contract", "Internship"].map((jobType) => (
-                <TouchableOpacity
-                  key={jobType}
-                  style={[
-                    styles.jobTypeButton,
-                    {
-                      backgroundColor: type === jobType ? theme.accent : theme.card,
-                      borderColor: type === jobType ? theme.accent : theme.border,
-                    },
-                  ]}
-                  onPress={() => setType(jobType)}
-                >
-                  <Text
-                    style={[
-                      styles.jobTypeText,
-                      {
-                        color: type === jobType ? "#FFFFFF" : theme.text,
-                      },
-                    ]}
-                  >
-                    {jobType}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Salary Range</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.card,
-                  color: theme.text,
-                  borderColor: theme.border,
-                },
-              ]}
-              placeholder="e.g. $100,000 - $130,000"
-              placeholderTextColor={theme.text + "60"}
-              value={salary}
-              onChangeText={setSalary}
-            />
-          </View>
-
-          <View style={styles.switchContainer}>
-            <View style={styles.switchInfo}>
-              <Ionicons name="home-outline" size={22} color={theme.accent} />
-              <Text style={[styles.switchText, { color: theme.text }]}>Remote Position</Text>
-            </View>
-            <Switch
-              value={isRemote}
-              onValueChange={setIsRemote}
-              trackColor={{ false: "#767577", true: theme.accent + "80" }}
-              thumbColor={isRemote ? theme.accent : "#f4f3f4"}
-            />
-          </View>
-        </View>
-
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Job Description</Text>
-
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Description *</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Description *
+            </Text>
             <TextInput
               style={[
                 styles.textArea,
@@ -241,7 +232,74 @@ const CreateJobScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Requirements *</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Category Job *
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.border,
+                  justifyContent: "center",
+                },
+              ]}
+              onPress={() => setShowCategoryPicker(true)}
+            >
+              <Text style={{ color: theme.text }}>
+                {categories.find((cat) => cat.id === categoryId)?.name ||
+                  "Select Level"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Price/Salary *
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+              placeholder="e.g. 5000"
+              placeholderTextColor={theme.text + "60"}
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Job Level *
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.border,
+                  justifyContent: "center",
+                },
+              ]}
+              onPress={() => setShowLevelPicker(true)}
+            >
+              <Text style={{ color: theme.text }}>
+                {levels.find((lev) => lev.id === levelId)?.name ||
+                  "Select Level"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Required Skills *
+            </Text>
             <TextInput
               style={[
                 styles.textArea,
@@ -251,75 +309,259 @@ const CreateJobScreen = () => {
                   borderColor: theme.border,
                 },
               ]}
-              placeholder="List the required skills, experience, and qualifications..."
+              placeholder="List required skills (comma separated)"
               placeholderTextColor={theme.text + "60"}
               multiline
-              numberOfLines={6}
+              numberOfLines={4}
               textAlignVertical="top"
-              value={requirements}
-              onChangeText={setRequirements}
+              value={requiredSkills}
+              onChangeText={setRequiredSkills}
             />
             <Text style={[styles.helperText, { color: theme.text + "60" }]}>
-              Tip: Use a new line for each requirement
+              Tip: Separate skills with commas (e.g. React, TypeScript, Node.js)
             </Text>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Benefits *</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Minimum Experience (Years) *
+            </Text>
             <TextInput
               style={[
-                styles.textArea,
+                styles.input,
                 {
                   backgroundColor: theme.card,
                   color: theme.text,
                   borderColor: theme.border,
                 },
               ]}
-              placeholder="List the benefits and perks offered with this position..."
+              placeholder="e.g. 2"
               placeholderTextColor={theme.text + "60"}
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-              value={benefits}
-              onChangeText={setBenefits}
+              value={minExperienceYears}
+              onChangeText={setMinExperienceYears}
+              keyboardType="numeric"
             />
-            <Text style={[styles.helperText, { color: theme.text + "60" }]}>Tip: Use a new line for each benefit</Text>
           </View>
         </View>
 
+        {/* Job Details Section */}
         <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Publishing Options</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Job Details
+          </Text>
 
-          <View style={styles.switchContainer}>
-            <View style={styles.switchInfo}>
-              <Ionicons name="flash-outline" size={22} color={theme.accent} />
-              <Text style={[styles.switchText, { color: theme.text }]}>Mark as Urgent</Text>
-            </View>
-            <Switch
-              value={isUrgent}
-              onValueChange={setIsUrgent}
-              trackColor={{ false: "#767577", true: theme.accent + "80" }}
-              thumbColor={isUrgent ? theme.accent : "#f4f3f4"}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Number of Employees *
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+              placeholder="e.g. 3"
+              placeholderTextColor={theme.text + "60"}
+              value={numberOfEmployee}
+              onChangeText={setNumberOfEmployee}
+              keyboardType="numeric"
             />
           </View>
 
-          <View style={styles.switchContainer}>
-            <View style={styles.switchInfo}>
-              <Ionicons name="eye-outline" size={22} color={theme.accent} />
-              <Text style={[styles.switchText, { color: theme.text }]}>Visible to Public</Text>
-            </View>
-            <Switch
-              value={isVisible}
-              onValueChange={setIsVisible}
-              trackColor={{ false: "#767577", true: theme.accent + "80" }}
-              thumbColor={isVisible ? theme.accent : "#f4f3f4"}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Duration (months) *
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+              placeholder="e.g. 12"
+              placeholderTextColor={theme.text + "60"}
+              value={duration}
+              onChangeText={setDuration}
+              keyboardType="numeric"
             />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Status
+            </Text>
+            <View style={styles.jobTypeContainer}>
+              {[
+                { value: "open", label: "Open" },
+                { value: "closed", label: "Closed" },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.jobTypeButton,
+                    {
+                      backgroundColor:
+                        status === option.value ? theme.accent : theme.card,
+                      borderColor:
+                        status === option.value ? theme.accent : theme.border,
+                    },
+                  ]}
+                  onPress={() => setStatus(option.value as "open" | "closed")}
+                >
+                  <Text
+                    style={[
+                      styles.jobTypeText,
+                      {
+                        color: status === option.value ? "#FFFFFF" : theme.text,
+                      },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Job Type
+            </Text>
+            <View style={styles.jobTypeContainer}>
+              {[
+                { value: "full-time", label: "Full-time" },
+                { value: "part-time", label: "Part-time" },
+                { value: "contract", label: "Contract" },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.jobTypeButton,
+                    {
+                      backgroundColor:
+                        typeJob === option.value ? theme.accent : theme.card,
+                      borderColor:
+                        typeJob === option.value ? theme.accent : theme.border,
+                    },
+                  ]}
+                  onPress={() =>
+                    setTypeJob(
+                      option.value as "full-time" | "part-time" | "contract"
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.jobTypeText,
+                      {
+                        color:
+                          typeJob === option.value ? "#FFFFFF" : theme.text,
+                      },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Salary Type
+            </Text>
+            <View style={styles.jobTypeContainer}>
+              {[
+                { value: "fixed", label: "Fixed" },
+                { value: "flexible", label: "Flexible" },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.jobTypeButton,
+                    {
+                      backgroundColor:
+                        typeSalary === option.value ? theme.accent : theme.card,
+                      borderColor:
+                        typeSalary === option.value
+                          ? theme.accent
+                          : theme.border,
+                    },
+                  ]}
+                  onPress={() =>
+                    setTypeSalary(option.value as "fixed" | "flexible")
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.jobTypeText,
+                      {
+                        color:
+                          typeSalary === option.value ? "#FFFFFF" : theme.text,
+                      },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Work System
+            </Text>
+            <View style={styles.jobTypeContainer}>
+              {[
+                { value: "wfo", label: "Work From Office" },
+                { value: "wfh", label: "Work From Home" },
+                { value: "hybrid", label: "Hybrid" },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.jobTypeButton,
+                    {
+                      backgroundColor:
+                        system === option.value ? theme.accent : theme.card,
+                      borderColor:
+                        system === option.value ? theme.accent : theme.border,
+                    },
+                  ]}
+                  onPress={() =>
+                    setSystem(option.value as "wfo" | "wfh" | "hybrid")
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.jobTypeText,
+                      {
+                        color: system === option.value ? "#FFFFFF" : theme.text,
+                      },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
 
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.submitButton, { backgroundColor: theme.accent }, isSubmitting && { opacity: 0.7 }]}
+            style={[
+              styles.submitButton,
+              { backgroundColor: theme.accent },
+              isSubmitting && { opacity: 0.7 },
+            ]}
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
@@ -334,13 +576,88 @@ const CreateJobScreen = () => {
             onPress={handleSaveDraft}
             disabled={isSubmitting}
           >
-            <Text style={[styles.draftButtonText, { color: theme.accent }]}>Save as Draft</Text>
+            <Text style={[styles.draftButtonText, { color: theme.accent }]}>
+              Save as Draft
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <ModalPicker
+        title={"Select Job Level"}
+        data={levels}
+        onClose={() => setShowLevelPicker(false)}
+        onSelect={(value) => {
+          setLevelId(value);
+          setShowLevelPicker(false);
+        }}
+        theme={theme}
+        styles={styles}
+        visible={showLevelPicker}
+        selectedValue={levelId}
+      />
+      <ModalPicker
+        title={"Select Category job"}
+        data={categories as { id: number; name: string }[]}
+        onClose={() => setShowCategoryPicker(false)}
+        onSelect={(value) => {
+          setCategoryId(value);
+          setShowCategoryPicker(false);
+        }}
+        theme={theme}
+        styles={styles}
+        visible={showCategoryPicker}
+        selectedValue={categoryId}
+      />
     </View>
-  )
-}
+  );
+};
+
+const ModalPicker = ({
+  visible,
+  onClose,
+  onSelect,
+  data,
+  theme,
+  styles,
+  selectedValue,
+  title,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (value: number) => void;
+  data: { id: number; name: string }[];
+  theme: { card: string; text: string };
+  styles: any;
+  selectedValue: number;
+  title: string;
+}) => {
+  return (
+    <Modal visible={visible} transparent={true} animationType="slide">
+      <View style={styles.modalContainer}>
+        <View style={[styles.pickerContainer, { backgroundColor: theme.card }]}>
+          <View style={styles.pickerHeader}>
+            <Text style={[styles.pickerTitle, { color: theme.text }]}>
+              {title}
+            </Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={theme.text} />
+            </TouchableOpacity>
+          </View>
+          <Picker
+            selectedValue={selectedValue}
+            onValueChange={(itemValue) => onSelect(itemValue)}
+            style={{ color: theme.text }}
+          >
+            {data.map((item) => (
+              <Picker.Item key={item.id} label={item.name} value={item.id} />
+            ))}
+          </Picker>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -350,7 +667,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: 5,
     paddingTop: 60,
     paddingBottom: 16,
   },
@@ -369,10 +686,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 5,
   },
   formSection: {
     marginBottom: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -442,6 +762,7 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     marginVertical: 24,
+    flex: 1,
   },
   submitButton: {
     height: 50,
@@ -449,6 +770,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
+    width: "90%",
+    alignSelf: "center",
   },
   submitButtonText: {
     color: "#FFFFFF",
@@ -461,11 +784,35 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
+    width: "90%",
+    alignSelf: "center",
   },
   draftButtonText: {
     fontSize: 16,
     fontFamily: "Poppins-Medium",
   },
-})
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  pickerContainer: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  pickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.1)",
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontFamily: "Poppins-Medium",
+  },
+});
 
-export default withAuth(CreateJobScreen)
+export default withAuth(CreateJobScreen);

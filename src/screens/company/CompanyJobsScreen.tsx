@@ -8,7 +8,6 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
@@ -19,104 +18,17 @@ import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
 import withAuth from "@/src/hoc/withAuth"
 import { useDashboard } from "@/src/contexts/Company/DashboardContext"
 import LoadingScreen from "../common/LoadingScreen"
+import { Job } from "@/src/types/Job"
 
 type CompanyJobsScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
 
-// Mock data fetching function
-const fetchJobs = async (searchQuery = "", filter = "all") => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const allJobs = [
-    {
-      id: "1",
-      title: "Senior React Developer",
-      type: "Full-time",
-      location: "Remote",
-      applicants: 12,
-      postedAt: "2023-11-15",
-      status: "active",
-      description: "We are looking for an experienced React developer to join our team.",
-    },
-    {
-      id: "2",
-      title: "Product Designer",
-      type: "Full-time",
-      location: "New York, USA",
-      applicants: 8,
-      postedAt: "2023-11-18",
-      status: "active",
-      description: "Seeking a talented product designer with experience in UI/UX design.",
-    },
-    {
-      id: "3",
-      title: "React Native Developer",
-      type: "Contract",
-      location: "Remote",
-      applicants: 5,
-      postedAt: "2023-11-20",
-      status: "active",
-      description: "Looking for a React Native developer for a mobile app project.",
-    },
-    {
-      id: "4",
-      title: "Backend Developer",
-      type: "Full-time",
-      location: "San Francisco, USA",
-      applicants: 10,
-      postedAt: "2023-11-10",
-      status: "closed",
-      description: "Seeking a backend developer with experience in Node.js and MongoDB.",
-    },
-    {
-      id: "5",
-      title: "DevOps Engineer",
-      type: "Full-time",
-      location: "Remote",
-      applicants: 6,
-      postedAt: "2023-11-05",
-      status: "closed",
-      description: "Looking for a DevOps engineer with experience in AWS and CI/CD pipelines.",
-    },
-    {
-      id: "6",
-      title: "UI/UX Designer",
-      type: "Part-time",
-      location: "Remote",
-      applicants: 15,
-      postedAt: "2023-11-22",
-      status: "draft",
-      description: "Seeking a UI/UX designer for a new product design.",
-    },
-  ]
-
-  // Filter jobs based on search query
-  let filteredJobs = allJobs
-  if (searchQuery) {
-    filteredJobs = allJobs.filter(
-      (job) =>
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-  }
-
-  // Apply status filter
-  if (filter !== "all") {
-    filteredJobs = filteredJobs.filter((job) => job.status === filter)
-  }
-
-  return filteredJobs
-}
 
 const CompanyJobsScreen = () => {
   const navigation = useNavigation<CompanyJobsScreenNavigationProp>()
   const { theme } = useTheme()
-  const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [refreshing, setRefreshing] = useState(false)
-  const { data, isLoading } = useDashboard();
-  const { jobs } = data || {};
+  const { filteredData, isLoading, setSearchQuery, searchQuery } = useDashboard();
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -125,7 +37,7 @@ const CompanyJobsScreen = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
+      case "open":
         return "#10B981" // Green
       case "closed":
         return "#EF4444" // Red
@@ -136,19 +48,19 @@ const CompanyJobsScreen = () => {
     }
   }
 
-  const renderJobItem = ({ item }: { item: any }) => (
+  const renderJobItem = ({ item }: { item: Job }) => (
     <TouchableOpacity
       style={[styles.jobCard, { backgroundColor: theme.card }]}
       onPress={() => navigation.navigate("JobDetails", { jobId: item.id })}
       activeOpacity={0.7}
     >
       <View style={styles.jobHeader}>
-        <Text style={[styles.jobTitle, { color: theme.text }]}>{item.title}</Text>
+        <Text style={[styles.jobTitle, { color: theme.text }]}>{item?.post?.title}</Text>
         <View
           style={[
             styles.statusBadge,
             {
-              backgroundColor: getStatusColor(item.status) + "20",
+              backgroundColor: getStatusColor(item?.status) + "20",
             },
           ]}
         >
@@ -156,7 +68,7 @@ const CompanyJobsScreen = () => {
             style={[
               styles.statusText,
               {
-                color: getStatusColor(item.status),
+                color: getStatusColor(item?.status),
               },
             ]}
           >
@@ -166,31 +78,31 @@ const CompanyJobsScreen = () => {
       </View>
 
       <Text style={[styles.jobDescription, { color: theme.text + "80" }]} numberOfLines={2}>
-        {item.description}
+        {item?.post?.description}
       </Text>
 
       <View style={styles.jobDetails}>
         <View style={styles.jobDetail}>
           <Ionicons name="briefcase-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{item.type}</Text>
+          <Text style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'capitalize' }]}>{item.type_job}</Text>
         </View>
 
         <View style={styles.jobDetail}>
           <Ionicons name="location-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{item.location}</Text>
+          <Text style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'uppercase' }]}>{item.system}</Text>
         </View>
       </View>
 
       <View style={styles.jobFooter}>
         <View style={styles.jobDetail}>
           <Ionicons name="people-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{item.applicants} Applicants</Text>
+          <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{item.post.applications_count} Applicants</Text>
         </View>
 
         <View style={styles.jobDetail}>
           <Ionicons name="time-outline" size={16} color={theme.text + "80"} />
           <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>
-            Posted {new Date(item.postedAt).toLocaleDateString()}
+            Posted {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
       </View>
@@ -267,9 +179,9 @@ const CompanyJobsScreen = () => {
 
       {isLoading ? (
        <LoadingScreen />
-      ) : jobs && jobs.length > 0 ? (
+      ) : filteredData?.jobs && filteredData?.jobs?.length > 0 ? (
         <FlatList
-          data={jobs}
+          data={filteredData.jobs}
           renderItem={renderJobItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.jobsList}
@@ -396,6 +308,7 @@ const styles = StyleSheet.create({
   jobDetails: {
     flexDirection: "row",
     marginBottom: 10,
+    columnGap: 5
   },
   jobFooter: {
     flexDirection: "row",
@@ -404,7 +317,6 @@ const styles = StyleSheet.create({
   jobDetail: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 16,
   },
   jobDetailText: {
     fontSize: 12,

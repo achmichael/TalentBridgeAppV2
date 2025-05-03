@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -16,10 +16,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator";
-import { useQuery } from "@tanstack/react-query";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import withAuth from "@/src/hoc/withAuth";
-import { baseUrl } from "@/src/config/baseUrl";
+import { Job } from "@/src/types/Job";
+import { Application } from "@/src/types/Application";
+import { useDashboard } from "@/src/contexts/Company/DashboardContext";
 
 type CompanyDashboardScreenNavigationProp =
   StackNavigationProp<CompanyStackParamList>;
@@ -27,43 +28,19 @@ type CompanyDashboardScreenNavigationProp =
 const CompanyDashboardScreen = () => {
   const navigation = useNavigation<CompanyDashboardScreenNavigationProp>();
   const { theme } = useTheme();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
+  const [totalApplicants, setTotalApplicants] = useState(0);
+  const [totalTeams, setTotalTeams] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const fetchDashboardData = async () => {
-    try {
-      const response = await fetch(`${baseUrl}/jobs/company-jobs`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          id: user?.id,
-        }),
-      });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to fetch dashboard data");
-      }
+  const { data, isLoading, refetch } = useDashboard();
 
-      return result.data;
-    } catch (error) {
-      console.error("Error in fetchDashboardData:", error);
-      throw error;
+  useEffect(() => {
+    if (data?.jobs?.length > 0){
+      setTotalApplicants(data?.jobs?.reduce((total: number, job: any) => total + (job.post.applications_count || 0), 0));
+      setTotalTeams(data?.user?.company?.employees?.length || 0);
     }
-  };
-
-
-  const {
-    data: dashboardData,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["companyDashboard"],
-    queryFn: fetchDashboardData,
-  });
+  }, [data]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -113,18 +90,18 @@ const CompanyDashboardScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
-          <Text style={styles.statsNumber}>{dashboardData?.activeJobs || 0}</Text>
+          <Text style={styles.statsNumber}>{data?.jobs?.filter((job: any) => job.status === 'open').length || 0}</Text>
           <Text style={styles.statsLabel}>Active Jobs</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
           <Text style={styles.statsNumber}>
-            {dashboardData?.totalApplicants || 0}
+            {totalApplicants}
           </Text>
           <Text style={styles.statsLabel}>Applicants</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.secondary }]}>
           <Text style={styles.statsNumber}>
-            {dashboardData?.teamMembers || 0}
+            {totalTeams}
           </Text>
           <Text style={styles.statsLabel}>Team</Text>
         </View>
@@ -153,7 +130,7 @@ const CompanyDashboardScreen = () => {
                 size={24}
                 color={theme.accent}
               />
-            </View>
+          </View>
             <Text style={[styles.quickActionText, { color: theme.text }]}>
               Post a Job
             </Text>
@@ -229,47 +206,49 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.recentApplicants?.map((applicant: any) => (
-          <TouchableOpacity
-            key={applicant.id}
-            style={[styles.applicantCard, { backgroundColor: theme.card }]}
-            onPress={() =>
-              navigation.navigate("ApplicantProfile", {
-                applicantId: applicant.id,
-              })
-            }
-          >
-            <Image
-              source={{ uri: applicant.avatar }}
-              style={styles.applicantAvatar}
-            />
-            <View style={styles.applicantInfo}>
-              <Text style={[styles.applicantName, { color: theme.text }]}>
-                {applicant.name}
-              </Text>
-              <Text
-                style={[styles.applicantTitle, { color: theme.text + "80" }]}
-              >
-                {applicant.title}
-              </Text>
-              <View style={styles.applicantMeta}>
-                <Text style={[styles.appliedFor, { color: theme.accent }]}>
-                  Applied for: {applicant.appliedFor}
+        {data?.jobs?.map((job: Job) =>
+          job?.post?.applications?.map((applicant: Application) => (
+            <TouchableOpacity
+              key={applicant.id}
+              style={[styles.applicantCard, { backgroundColor: theme.card }]}
+              onPress={() =>
+                navigation.navigate("ApplicantProfile", {
+                  applicantId: applicant.id,
+                })
+              }
+            >
+              <Image
+                source={{ uri: applicant?.applicant?.profile_picture || '' }}
+                style={styles.applicantAvatar}
+              />
+              <View style={styles.applicantInfo}>
+                <Text style={[styles.applicantName, { color: theme.text }]}>
+                  {applicant?.applicant?.username}
                 </Text>
                 <Text
-                  style={[styles.appliedTime, { color: theme.text + "60" }]}
+                  style={[styles.applicantTitle, { color: theme.text + "80" }]}
                 >
-                  {new Date(applicant.appliedAt).toLocaleDateString()}
+                  {applicant.applicant?.phone_number}
                 </Text>
+                <View style={styles.applicantMeta}>
+                  <Text style={[styles.appliedFor, { color: theme.accent }]}>
+                    Applied for: {applicant?.post?.title}
+                  </Text>
+                  <Text
+                    style={[styles.appliedTime, { color: theme.text + "60" }]}
+                  >
+                    {new Date(applicant.created_at).toLocaleDateString()}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={theme.text + "60"}
-            />
-          </TouchableOpacity>
-        ))}
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.text + "60"}
+              />
+            </TouchableOpacity>
+          ))
+        )}
       </View>
 
       {/* Active Jobs */}
@@ -286,7 +265,7 @@ const CompanyDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {dashboardData?.map((job: any) => (
+        {data?.jobs?.map((job: Job) => (
           <TouchableOpacity
             key={job.id}
             style={[styles.jobCard, { backgroundColor: theme.card }]}
@@ -294,7 +273,7 @@ const CompanyDashboardScreen = () => {
           >
             <View style={styles.jobHeader}>
               <Text style={[styles.jobTitle, { color: theme.text }]}>
-                {job.title}
+                {job.post.title}
               </Text>
               <View
                 style={[
@@ -303,7 +282,7 @@ const CompanyDashboardScreen = () => {
                 ]}
               >
                 <Text style={[styles.jobTypeText, { color: theme.accent }]}>
-                  {job.type}
+                  {job.type_job}
                 </Text>
               </View>
             </View>
@@ -316,9 +295,9 @@ const CompanyDashboardScreen = () => {
                   color={theme.text + "80"}
                 />
                 <Text
-                  style={[styles.jobDetailText, { color: theme.text + "80" }]}
+                  style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'uppercase', minWidth: 40 }]}
                 >
-                  {job.location}
+                  {job?.system}
                 </Text>
               </View>
 
@@ -331,7 +310,7 @@ const CompanyDashboardScreen = () => {
                 <Text
                   style={[styles.jobDetailText, { color: theme.text + "80" }]}
                 >
-                  {job.applicants} Applicants
+                  {job?.post?.applications_count || 0} Applicants
                 </Text>
               </View>
 
@@ -344,7 +323,7 @@ const CompanyDashboardScreen = () => {
                 <Text
                   style={[styles.jobDetailText, { color: theme.text + "80" }]}
                 >
-                  Posted {new Date(job.postedAt).toLocaleDateString()}
+                  Posted {new Date(job.created_at).toLocaleDateString()}
                 </Text>
               </View>
             </View>

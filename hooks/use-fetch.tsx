@@ -12,6 +12,7 @@ const useFetch = (url: string, options?: object) => {
                 const response = await fetch(url, options);
                 const result = await response.json();
                 if (!response.ok){
+                    setLoading(false);
                     throw new Error(`${result.message}`);
                 }
                 setData(result.data);
@@ -23,11 +24,12 @@ const useFetch = (url: string, options?: object) => {
                 } else {
                     setError("An unknown error occurred");
                 }
+                setLoading(false);
             }
         }
 
         fetchData();
-    });
+    }, []);
 
     return { data, loading, error }; 
 }

@@ -1,9 +1,13 @@
-export type User = {
+import { Company } from "./Company";
+export interface User {
     id: string;
     username: string;
     email: string;
-    role: "client" | "freelancer" | "company" | "admin";
-    phone_number?: string;
-    profile_picture?: string;
-    is_verified: boolean;
+    role_id: number;
+    phone_number: string | null;
+    profile_picture: string | null;
+    is_verified: number;
+    created_at: string;
+    updated_at: string;
+    company: Company;
 }

@@ -10,8 +10,6 @@ import useRegister from "@/hooks/use-register";
 import { redirectBasedOnRole } from "../components/common/navigation";
 import { AuthSessionRedirectUriOptions } from "expo-auth-session";
 import { baseUrl } from "../config/baseUrl";
-import { redirectToAuth } from "../hoc/withAuth";
-import { navigationRef } from "@/App";
 
 // Pastikan browser ditutup setelah autentikasi
 WebBrowser.maybeCompleteAuthSession();
@@ -58,6 +56,7 @@ interface AuthContextType {
   role: UserRole;
   user: User | null;
   logout: () => Promise<void>;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,10 +68,10 @@ export const AuthProvider: React.FC<{
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [jwt, setJwt] = useState<string | null | undefined>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const { login, isLoading: loginLoading } = useLogin();
   const [role, setRole] = useState<UserRole>("client");
   const { register, isLoading: registerLoading } = useRegister();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest(
     {
@@ -141,6 +140,7 @@ export const AuthProvider: React.FC<{
   useEffect(() => {
     if (isNavReady && role && jwt) {
       const validateToken = async () => {
+        setIsLoading(true);
         try {
           const response = await fetch(`${baseUrl}/verify-token`, {
             headers: {
@@ -151,29 +151,31 @@ export const AuthProvider: React.FC<{
           const data = await response.json();
           if (!response.ok || !data.success) {
             signOut();
-            console.log('error verifikasi token', data.message);
-            redirectToAuth(navigationRef);
+            return;
           }
 
-          setIsAuthenticated(true);
-          redirectBasedOnRole(role);
+          if (isNavReady){
+            setIsAuthenticated(true);
+            setIsLoading(false);
+            setTimeout(() => {
+              redirectBasedOnRole(role);
+            }, 100);
+          }
         } catch (error) {
           signOut();
-          redirectToAuth(navigationRef);
-          setIsAuthenticated(false);
-        } finally {
           setIsLoading(false);
           setIsAuthenticated(false);
+        } finally {
+          setIsAuthenticated(false);
+          setIsLoading(false);
         }
       }
-
-      
       validateToken();
     }
   }, [jwt, role, isNavReady]);
 
   useEffect(() => {
-    const loadJwt = async () => {
+    const loadCredentials = async () => {
       try {
         const jwtJson = await AsyncStorage.getItem("@jwt");
         const role = await AsyncStorage.getItem("@role");
@@ -207,7 +209,7 @@ export const AuthProvider: React.FC<{
       }
     };
 
-    loadJwt();
+    loadCredentials();
   }, []);
 
   const handleUserAuthenticated = async (
@@ -227,7 +229,7 @@ export const AuthProvider: React.FC<{
     setIsLoading(true);
     try {
       const result = await login(username, password);
-      if (result.access_token) {
+      if (result.access_token && !loginLoading) {
         await AsyncStorage.setItem("@jwt", JSON.stringify(result.access_token));
         await AsyncStorage.setItem(
           "@role",
@@ -320,6 +322,7 @@ export const AuthProvider: React.FC<{
         role,
         user,
         logout: signOut,
+        isAuthenticated
       }}
     >
       {children}

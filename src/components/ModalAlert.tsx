@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-type AlertType = 'info' | 'success' | 'error';
+export type AlertType = 'info' | 'success' | 'error';
 
 interface AlertModalProps {
   visible: boolean;
@@ -111,8 +111,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
   const renderIcon = () => {
     const styles = getAlertStyles();
     const iconProps = {
-      width: 24,
-      height: 24,
+      size: 24,
       color: styles.iconColor,
       strokeWidth: 2,
     };
@@ -205,7 +204,6 @@ const modalStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },

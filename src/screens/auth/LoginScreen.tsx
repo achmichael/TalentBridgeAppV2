@@ -19,7 +19,7 @@ import Input from "../../components/common/Input"
 import Button from "../../components/common/Button"
 import SocialButton from "../../components/common/SocialButton"
 import { redirectBasedOnRole } from "@/src/components/common/navigation"
-import { navigationRef } from "@/App"
+import { navigationRef } from "@/src/components/common/navigation"
 
 const LoginScreen = () => {
   const { theme } = useTheme()
@@ -39,7 +39,7 @@ const LoginScreen = () => {
     setIsLoading(true)
     try {
       await signIn(username, password)
-      redirectBasedOnRole(role)
+      // redirectBasedOnRole(role)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Could not sign in";
       Alert.alert("Login Failed", errorMessage)

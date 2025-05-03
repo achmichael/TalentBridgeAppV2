@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { ReactNode, useState } from "react"
 import {
   View,
   Text,
@@ -14,110 +14,15 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
-import { useQuery } from "@tanstack/react-query"
 import withAuth from "@/src/hoc/withAuth"
-
-// Mock data fetching function
-const fetchTeamMembers = async (searchQuery = "") => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const allMembers = [
-    {
-      id: "1",
-      name: "John Doe",
-      position: "Senior React Developer",
-      avatar: "https://ui-avatars.com/api/?name=John+Doe",
-      department: "Engineering",
-      email: "john.doe@example.com",
-      phone: "+1 (555) 123-4567",
-      joinDate: "2021-05-15",
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      position: "UI/UX Designer",
-      avatar: "https://ui-avatars.com/api/?name=Jane+Smith",
-      department: "Design",
-      email: "jane.smith@example.com",
-      phone: "+1 (555) 987-6543",
-      joinDate: "2022-01-10",
-      status: "active",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      position: "Product Manager",
-      avatar: "https://ui-avatars.com/api/?name=Mike+Johnson",
-      department: "Product",
-      email: "mike.johnson@example.com",
-      phone: "+1 (555) 456-7890",
-      joinDate: "2021-08-22",
-      status: "active",
-    },
-    {
-      id: "4",
-      name: "Sarah Williams",
-      position: "Marketing Specialist",
-      avatar: "https://ui-avatars.com/api/?name=Sarah+Williams",
-      department: "Marketing",
-      email: "sarah.williams@example.com",
-      phone: "+1 (555) 789-0123",
-      joinDate: "2022-03-05",
-      status: "active",
-    },
-    {
-      id: "5",
-      name: "David Brown",
-      position: "Backend Developer",
-      avatar: "https://ui-avatars.com/api/?name=David+Brown",
-      department: "Engineering",
-      email: "david.brown@example.com",
-      phone: "+1 (555) 234-5678",
-      joinDate: "2021-11-15",
-      status: "active",
-    },
-    {
-      id: "6",
-      name: "Emily Davis",
-      position: "Content Writer",
-      avatar: "https://ui-avatars.com/api/?name=Emily+Davis",
-      department: "Marketing",
-      email: "emily.davis@example.com",
-      phone: "+1 (555) 345-6789",
-      joinDate: "2022-05-20",
-      status: "active",
-    },
-  ]
-
-  // Filter team members based on search query
-  if (searchQuery) {
-    return allMembers.filter(
-      (member) =>
-        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.department.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-  }
-
-  return allMembers
-}
+import { useDashboard } from "@/src/contexts/Company/DashboardContext"
+import { navigationRef } from "@/src/components/common/navigation"
 
 const CompanyTeamScreen = () => {
   const { theme } = useTheme()
-  const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [selectedDepartment, setSelectedDepartment] = useState("All")
-
-  const {
-    data: teamMembers,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["teamMembers", searchQuery],
-    queryFn: () => fetchTeamMembers(searchQuery),
-  })
+  const { filteredData, refetch, isLoading, searchQuery, setSearchQuery } = useDashboard();
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -125,41 +30,43 @@ const CompanyTeamScreen = () => {
     setRefreshing(false)
   }
 
-  // Get unique departments for filter
-  const departments = teamMembers
-    ? ["All", ...Array.from(new Set(teamMembers.map((member) => member.department)))]
+  const teamsData = filteredData.user?.company?.employees;
+
+  const departments = teamsData
+    ? ["All", ...Array.from(new Set(teamsData.map((member: any) => member.position)))]
     : ["All"]
 
-  // Filter members by department
   const filteredMembers =
-    teamMembers && selectedDepartment !== "All"
-      ? teamMembers.filter((member) => member.department === selectedDepartment)
-      : teamMembers
+    teamsData && selectedDepartment !== "All"
+      ? teamsData.filter((member: any) => member.position === selectedDepartment)
+      : teamsData
 
   const renderTeamMember = ({ item }: { item: any }) => (
     <TouchableOpacity style={[styles.memberCard, { backgroundColor: theme.card }]} activeOpacity={0.7}>
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
+      <Image source={{ uri: item.avatar || 'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dXNlcnxlbnwwfHwwfHx8MA%3D%3D' }} style={styles.avatar} />
       <View style={styles.memberInfo}>
-        <Text style={[styles.memberName, { color: theme.text }]}>{item.name}</Text>
-        <Text style={[styles.memberPosition, { color: theme.text + "80" }]}>{item.position}</Text>
+        <Text style={[styles.memberName, { color: theme.text , textTransform: 'capitalize'}]}>{item?.employee?.username}</Text>
+        {/* <Text style={[styles.memberPosition, { color: getStatusColor(item?.status) + "90", textTransform: 'capitalize' }]}>{item.status}</Text> */}
         <View style={styles.memberDetails}>
           <View style={styles.memberDetail}>
             <Ionicons name="briefcase-outline" size={14} color={theme.text + "80"} />
-            <Text style={[styles.memberDetailText, { color: theme.text + "80" }]}>{item.department}</Text>
+            <Text style={[styles.memberDetailText, { color: theme.text + "80" }]}>{item.position}</Text>
           </View>
           <View style={styles.memberDetail}>
             <Ionicons name="calendar-outline" size={14} color={theme.text + "80"} />
             <Text style={[styles.memberDetailText, { color: theme.text + "80" }]}>
-              Joined {new Date(item.joinDate).toLocaleDateString()}
+              Joined {new Date(item.created_at).toLocaleDateString()}
             </Text>
           </View>
         </View>
       </View>
       <View style={styles.memberActions}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
+        {/* @ts-ignore */}
+        <TouchableOpacity onPress={() => navigationRef.navigate('ChatRoom')} style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
           <Ionicons name="mail-outline" size={18} color={theme.accent} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
+        {/* @ts-ignore */}
+        <TouchableOpacity onPress={() => navigationRef.navigate('Chat')} style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
           <Ionicons name="call-outline" size={18} color={theme.accent} />
         </TouchableOpacity>
       </View>
@@ -170,7 +77,7 @@ const CompanyTeamScreen = () => {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>Team Members</Text>
-        <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.accent }]}>
+        <TouchableOpacity onPress={() => navigationRef.navigate('CreateTeam' as never)} style={[styles.addButton, { backgroundColor: theme.accent }]}>
           <Ionicons name="add" size={20} color="#FFFFFF" />
           <Text style={styles.addButtonText}>Add Member</Text>
         </TouchableOpacity>
@@ -197,7 +104,7 @@ const CompanyTeamScreen = () => {
           data={departments}
           horizontal
           showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item}
+          keyExtractor={(item: any) => item}
           contentContainerStyle={styles.departmentsList}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -207,7 +114,7 @@ const CompanyTeamScreen = () => {
                   backgroundColor: selectedDepartment === item ? theme.accent : theme.card,
                 },
               ]}
-              onPress={() => setSelectedDepartment(item)}
+              onPress={() => setSelectedDepartment(item as string)}
             >
               <Text
                 style={[
@@ -217,7 +124,7 @@ const CompanyTeamScreen = () => {
                   },
                 ]}
               >
-                {item}
+                {item as ReactNode}
               </Text>
             </TouchableOpacity>
           )}
@@ -340,7 +247,6 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontFamily: "Poppins-Medium",
-    marginBottom: 2,
   },
   memberPosition: {
     fontSize: 14,
@@ -348,7 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   memberDetails: {
-    flexDirection: "row",
+    flexDirection: "column",
     flexWrap: "wrap",
   },
   memberDetail: {
@@ -365,6 +271,7 @@ const styles = StyleSheet.create({
   memberActions: {
     flexDirection: "column",
     justifyContent: "space-between",
+    rowGap: 5,
     height: 60,
   },
   actionButton: {
