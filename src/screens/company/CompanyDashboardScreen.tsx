@@ -36,9 +36,9 @@ const CompanyDashboardScreen = () => {
   const { data, isLoading, refetch } = useDashboard();
 
   useEffect(() => {
-    if (data?.length > 0){
-      setTotalApplicants(data?.reduce((total: number, job: any) => total + (job.post.applications_count || 0), 0));
-      setTotalTeams(data?.reduce((total: number, job: any) => total + (job.user?.company?.employees_count || 0), 0));
+    if (data?.jobs?.length > 0){
+      setTotalApplicants(data?.jobs?.reduce((total: number, job: any) => total + (job.post.applications_count || 0), 0));
+      setTotalTeams(data?.user?.company?.employees?.length || 0);
     }
   }, [data]);
 
@@ -295,9 +295,9 @@ const CompanyDashboardScreen = () => {
                   color={theme.text + "80"}
                 />
                 <Text
-                  style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'capitalize' }]}
+                  style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'uppercase', minWidth: 40 }]}
                 >
-                  {job?.post?.user?.company?.address}
+                  {job?.system}
                 </Text>
               </View>
 

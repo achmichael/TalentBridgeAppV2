@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,8 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import AlertModal from "@/src/components/ModalAlert";
 import { Picker } from "@react-native-picker/picker";
 import { AlertType } from "@/src/components/ModalAlert";
+import useFetch from "@/hooks/use-fetch";
+import LoadingScreen from "../common/LoadingScreen";
 
 const CreateJobScreen = () => {
   const navigation = useNavigation();
@@ -40,6 +42,7 @@ const CreateJobScreen = () => {
   const [levelId, setLevelId] = useState(1);
   const [requiredSkills, setRequiredSkills] = useState("");
   const [minExperienceYears, setMinExperienceYears] = useState("");
+  const [categoryId, setCategoryId] = useState(1);
 
   // Job fields
   const [numberOfEmployee, setNumberOfEmployee] = useState("");
@@ -50,14 +53,31 @@ const CreateJobScreen = () => {
   >("full-time");
   const [typeSalary, setTypeSalary] = useState<"fixed" | "flexible">("fixed");
   const [system, setSystem] = useState<"wfo" | "wfh" | "hybrid">("wfo");
-
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  const [categories, setCategories] = useState([
+  const [showLevelPicker, setShowLevelPicker] = useState(false);
+  const [levels, setLevels] = useState([
     { id: 1, name: "Entry Level" },
     { id: 2, name: "Mid Level" },
-    { id: 3, name: "Senior Level" },
-    { id: 4, name: "Executive" },
+    { id: 3, name: "Expert Level" },
   ]);
+
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
+
+  const { data, loading } = useFetch(`${baseUrl}/categories`);
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const typed = data as { id: number; category_name: string }[];
+      setCategories(
+        typed.map(({ id, category_name }) => ({
+          id,
+          name: category_name,
+        }))
+      );
+    }
+  }, [data]);
 
   const handleSubmit = async () => {
     if (
@@ -85,7 +105,7 @@ const CreateJobScreen = () => {
       description,
       price: Number(price),
       level_id: levelId,
-      category_id: 1,
+      category_id: categoryId,
       required_skills: JSON.stringify(formattedSkills),
       min_experience_years: Number(minExperienceYears),
       number_of_employee: Number(numberOfEmployee),
@@ -135,9 +155,19 @@ const CreateJobScreen = () => {
     ]);
   };
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <AlertModal visible={showModal} type={typeModal as AlertType} title={titleModal} message={messageModal} onClose={() => setShowModal(false)} />
+      <AlertModal
+        visible={showModal}
+        type={typeModal as AlertType}
+        title={titleModal}
+        message={messageModal}
+        onClose={() => setShowModal(false)}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -203,6 +233,28 @@ const CreateJobScreen = () => {
 
           <View style={styles.inputContainer}>
             <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Category Job *
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.border,
+                  justifyContent: "center",
+                },
+              ]}
+              onPress={() => setShowCategoryPicker(true)}
+            >
+              <Text style={{ color: theme.text }}>
+                {categories.find((cat) => cat.id === categoryId)?.name ||
+                  "Select Level"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
               Price/Salary *
             </Text>
             <TextInput
@@ -235,10 +287,10 @@ const CreateJobScreen = () => {
                   justifyContent: "center",
                 },
               ]}
-              onPress={() => setShowCategoryPicker(true)}
+              onPress={() => setShowLevelPicker(true)}
             >
               <Text style={{ color: theme.text }}>
-                {categories.find((cat) => cat.id === levelId)?.name ||
+                {levels.find((lev) => lev.id === levelId)?.name ||
                   "Select Level"}
               </Text>
             </TouchableOpacity>
@@ -531,44 +583,79 @@ const CreateJobScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Category Picker Modal */}
-      <Modal
+      <ModalPicker
+        title={"Select Job Level"}
+        data={levels}
+        onClose={() => setShowLevelPicker(false)}
+        onSelect={(value) => {
+          setLevelId(value);
+          setShowLevelPicker(false);
+        }}
+        theme={theme}
+        styles={styles}
+        visible={showLevelPicker}
+        selectedValue={levelId}
+      />
+      <ModalPicker
+        title={"Select Category job"}
+        data={categories as { id: number; name: string }[]}
+        onClose={() => setShowCategoryPicker(false)}
+        onSelect={(value) => {
+          setCategoryId(value);
+          setShowCategoryPicker(false);
+        }}
+        theme={theme}
+        styles={styles}
         visible={showCategoryPicker}
-        transparent={true}
-        animationType="slide"
-      >
-        <View style={styles.modalContainer}>
-          <View
-            style={[styles.pickerContainer, { backgroundColor: theme.card }]}
-          >
-            <View style={styles.pickerHeader}>
-              <Text style={[styles.pickerTitle, { color: theme.text }]}>
-                Select Job Level
-              </Text>
-              <TouchableOpacity onPress={() => setShowCategoryPicker(false)}>
-                <Ionicons name="close" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-            <Picker
-              selectedValue={levelId}
-              onValueChange={(itemValue) => {
-                setLevelId(itemValue);
-                setShowCategoryPicker(false);
-              }}
-              style={{ color: theme.text }}
-            >
-              {categories.map((category) => (
-                <Picker.Item
-                  key={category.id}
-                  label={category.name}
-                  value={category.id}
-                />
-              ))}
-            </Picker>
-          </View>
-        </View>
-      </Modal>
+        selectedValue={categoryId}
+      />
     </View>
+  );
+};
+
+const ModalPicker = ({
+  visible,
+  onClose,
+  onSelect,
+  data,
+  theme,
+  styles,
+  selectedValue,
+  title,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (value: number) => void;
+  data: { id: number; name: string }[];
+  theme: { card: string; text: string };
+  styles: any;
+  selectedValue: number;
+  title: string;
+}) => {
+  return (
+    <Modal visible={visible} transparent={true} animationType="slide">
+      <View style={styles.modalContainer}>
+        <View style={[styles.pickerContainer, { backgroundColor: theme.card }]}>
+          <View style={styles.pickerHeader}>
+            <Text style={[styles.pickerTitle, { color: theme.text }]}>
+              {title}
+            </Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={theme.text} />
+            </TouchableOpacity>
+          </View>
+          <Picker
+            selectedValue={selectedValue}
+            onValueChange={(itemValue) => onSelect(itemValue)}
+            style={{ color: theme.text }}
+          >
+            {data.map((item) => (
+              <Picker.Item key={item.id} label={item.name} value={item.id} />
+            ))}
+          </Picker>
+        </View>
+      </View>
+    </Modal>
   );
 };
 

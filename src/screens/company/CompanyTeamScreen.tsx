@@ -61,10 +61,12 @@ const CompanyTeamScreen = () => {
         </View>
       </View>
       <View style={styles.memberActions}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
+        {/* @ts-ignore */}
+        <TouchableOpacity onPress={() => navigationRef.navigate('ChatRoom')} style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
           <Ionicons name="mail-outline" size={18} color={theme.accent} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
+        {/* @ts-ignore */}
+        <TouchableOpacity onPress={() => navigationRef.navigate('Chat')} style={[styles.actionButton, { backgroundColor: theme.accent + "20" }]}>
           <Ionicons name="call-outline" size={18} color={theme.accent} />
         </TouchableOpacity>
       </View>

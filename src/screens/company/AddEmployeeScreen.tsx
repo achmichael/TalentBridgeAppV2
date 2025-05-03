@@ -18,12 +18,10 @@ import Animated, {
   useAnimatedStyle, 
   withTiming, 
   withSequence,
-  withDelay,
-  Easing,
   runOnJS
 } from 'react-native-reanimated';
-import { useDashboard } from '@/src/contexts/Company/DashboardContext';
 import withAuth from '@/src/hoc/withAuth';
+import { useTheme } from '@/src/contexts/ThemeContext';
 
 const positions = [
   'Software Developer',
@@ -42,9 +40,10 @@ const statusOptions = ['aktif', 'tidak aktif', 'cuti', 'resign'];
 
 const AddEmployee = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
 
   const addEmployee = async (employee: object) => { 
-    
+
   }
   
   // Form state
@@ -81,11 +80,9 @@ const AddEmployee = () => {
   });
   
   const handleAddEmployee = () => {
-    // Validate form
     if (!username || !email || !password || !position) {
       Alert.alert('Error', 'Please fill all required fields');
       
-      // Shake animation for error
       formTranslateY.value = withSequence(
         withTiming(-10, { duration: 100 }),
         withTiming(10, { duration: 100 }),
@@ -137,8 +134,9 @@ const AddEmployee = () => {
     );
   };
 
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -277,7 +275,7 @@ const AddEmployee = () => {
                     >
                       <Text style={[
                         styles.dropdownItemText,
-                        status === statusOption && styles.selectedDropdownItem
+                        status === statusOption && { fontWeight: 'bold', color: theme.accent }
                       ]}>
                         {statusOption}
                       </Text>
@@ -289,7 +287,7 @@ const AddEmployee = () => {
             
             <Animated.View style={[styles.buttonContainer, buttonAnimatedStyle]}>
               <TouchableOpacity 
-                style={styles.addButton}
+                style={[styles.addButton, { backgroundColor: theme.accent }]}
                 onPress={handleAddEmployee}
               >
                 <Text style={styles.addButtonText}>Add Employee</Text>
@@ -304,8 +302,7 @@ const AddEmployee = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+    flex: 1
   },
   header: {
     flexDirection: 'row',
@@ -313,7 +310,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
