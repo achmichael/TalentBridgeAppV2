@@ -241,6 +241,7 @@ export const AuthProvider: React.FC<{
         setRole(result?.user.role.role_name || "client");
         setUser(result?.user);
       }
+      
     } catch (error) {
       console.log("Sign in failed", error);
       throw error;

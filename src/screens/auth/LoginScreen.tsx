@@ -18,7 +18,7 @@ import { useAuth } from "../../contexts/AuthContext"
 import Input from "../../components/common/Input"
 import Button from "../../components/common/Button"
 import SocialButton from "../../components/common/SocialButton"
-import { redirectBasedOnRole } from "@/src/components/common/navigation"
+// import { redirectBasedOnRole } from "@/src/components/common/navigation"
 import { navigationRef } from "@/src/components/common/navigation"
 
 const LoginScreen = () => {

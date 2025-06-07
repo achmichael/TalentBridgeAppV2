@@ -38,8 +38,8 @@ const CompanyDashboardScreen = () => {
   useEffect(() => {
     if (data?.jobs?.length > 0){
       setTotalApplicants(data?.jobs?.reduce((total: number, job: any) => total + (job.post.applications_count || 0), 0));
-      setTotalTeams(data?.user?.company?.employees?.length || 0);
     }
+    setTotalTeams(data?.user?.company?.employees?.length || 0);
   }, [data]);
 
   const onRefresh = async () => {

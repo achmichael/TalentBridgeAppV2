@@ -50,6 +50,7 @@ export const DashboardClientProvider: React.FC<{
         });
         
         const result = await response.json();
+        
         if (!response.ok) {
           throw new Error(result.message || "Failed to fetch dashboard data");
         }

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   View,
   Text,
@@ -9,106 +9,59 @@ import {
   Image,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
-} from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import type { StackNavigationProp } from "@react-navigation/stack"
-import { Ionicons } from "@expo/vector-icons"
-import { useTheme } from "../../contexts/ThemeContext"
-import { useAuth } from "../../contexts/AuthContext"
-import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
-import { useQuery } from "@tanstack/react-query"
-import withAuth from "@/src/hoc/withAuth"
-import LoadingScreen from "../common/LoadingScreen"
+  Linking,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { StackNavigationProp } from "@react-navigation/stack";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
+import type { CompanyStackParamList } from "../../navigation/CompanyNavigator";
+import { useQuery } from "@tanstack/react-query";
+import { fetcher } from "@/src/components/common/AutoHelper";
+import { baseUrl } from "@/src/config/baseUrl";
+import EditProfileModal from "@/src/components/EditProfileModal";
+import LoadingScreen from "../common/LoadingScreen";
+import withAuth from "@/src/hoc/withAuth";
 
-type CompanyProfileScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
+type CompanyProfileScreenNavigationProp =
+  StackNavigationProp<CompanyStackParamList>;
 
-// Mock data fetching function
-const fetchCompanyProfile = async () => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+const fetchCompanyProfile = async ({
+  token,
+  id,
+}: {
+  token: string | null | undefined;
+  id: string | null | undefined;
+}) => {
+  try {
+    const { data, error } = await fetcher(
+      `${baseUrl}/companies/profile/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  return {
-    id: "1",
-    name: "Tech Solutions Inc.",
-    logo: "https://ui-avatars.com/api/?name=Tech+Solutions&background=random",
-    coverImage: "https://picsum.photos/800/200",
-    industry: "Software Development",
-    location: "San Francisco, CA",
-    website: "www.techsolutions.example.com",
-    founded: "2015",
-    size: "50-100 employees",
-    about:
-      "Tech Solutions Inc. is a leading software development company specializing in mobile and web applications. We work with businesses of all sizes to deliver innovative solutions that drive growth and efficiency.",
-    stats: {
-      jobsPosted: 25,
-      activeJobs: 5,
-      totalHires: 42,
-      reviews: 18,
-    },
-    socialLinks: {
-      linkedin: "linkedin.com/company/techsolutions",
-      twitter: "twitter.com/techsolutions",
-      facebook: "facebook.com/techsolutions",
-    },
-    activeJobs: [
-      {
-        id: "j1",
-        title: "Senior React Developer",
-        type: "Full-time",
-        location: "Remote",
-        applicants: 12,
-        postedAt: "2023-11-15",
-      },
-      {
-        id: "j2",
-        title: "Product Designer",
-        type: "Full-time",
-        location: "San Francisco, CA",
-        applicants: 8,
-        postedAt: "2023-11-18",
-      },
-      {
-        id: "j3",
-        title: "React Native Developer",
-        type: "Contract",
-        location: "Remote",
-        applicants: 5,
-        postedAt: "2023-11-20",
-      },
-    ],
-    recentHires: [
-      {
-        id: "h1",
-        name: "Alex Johnson",
-        position: "Senior Frontend Developer",
-        avatar: "https://ui-avatars.com/api/?name=Alex+Johnson",
-        hiredAt: "2023-10-15",
-      },
-      {
-        id: "h2",
-        name: "Sarah Williams",
-        position: "UI/UX Designer",
-        avatar: "https://ui-avatars.com/api/?name=Sarah+Williams",
-        hiredAt: "2023-09-22",
-      },
-      {
-        id: "h3",
-        name: "Mike Brown",
-        position: "Product Manager",
-        avatar: "https://ui-avatars.com/api/?name=Mike+Brown",
-        hiredAt: "2023-08-10",
-      },
-    ],
+    if (error) throw new Error(error);
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching company profile:", error);
+    throw error;
   }
-}
+};
 
 const CompanyProfileScreen = () => {
-  const navigation = useNavigation<CompanyProfileScreenNavigationProp>()
-  const { theme } = useTheme()
-  const { signOut } = useAuth()
-  const [refreshing, setRefreshing] = useState(false)
-  const [activeTab, setActiveTab] = useState("about")
+  const navigation = useNavigation<CompanyProfileScreenNavigationProp>();
+  const { theme } = useTheme();
+  const { signOut, user, token } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState("about");
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const {
     data: company,
@@ -116,76 +69,156 @@ const CompanyProfileScreen = () => {
     refetch,
   } = useQuery({
     queryKey: ["companyProfile"],
-    queryFn: fetchCompanyProfile,
-  })
-
+    queryFn: () => fetchCompanyProfile({ token, id: user?.id }),
+  });
+  
   const onRefresh = async () => {
-    setRefreshing(true)
-    await refetch()
-    setRefreshing(false)
-  }
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   if (isLoading || !company) {
-    return (
-      <LoadingScreen />
-    )
+    return <LoadingScreen />;
   }
+
+  const socialLinks = company.social_links ? JSON.parse(company.social_links) : {};
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.contentContainer}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.accent]} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.accent]}
+        />
+      }
     >
+      <EditProfileModal
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          onSave={async (updatedData) => {
+            try {
+              const response = await fetcher(
+                `${baseUrl}/companies/update`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify(updatedData),
+                }
+              );
+
+              if (response.error) {
+                throw new Error(response.error);
+              }
+
+              refetch();
+              setIsModalVisible(false);
+            } catch (error) {
+              console.error("Error updating profile:", error);
+            }
+          }}
+          initialData={{ ...company, social_links: JSON.parse(company.social_links || '{}') }}
+        />
+
       <View style={styles.header}>
         <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: theme.card }]}
-          onPress={() => navigation.navigate("CompanySettings")}
+          onPress={() => navigation.navigate('CompanySettings')}
         >
           <Ionicons name="settings-outline" size={22} color={theme.text} />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.logoutButton, { backgroundColor: theme.card }]} onPress={signOut}>
-          <Ionicons name="log-out-outline" size={22} color={theme.text} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.coverContainer}>
-        <Image source={{ uri: company.coverImage }} style={styles.coverImage} />
+        <Image
+          source={{ uri: company.cover_image }}
+          style={styles.coverImage}
+        />
         <View style={styles.logoContainer}>
-          <Image source={{ uri: company.logo }} style={styles.logo} />
+          <Image source={{ uri: company.cover_image }} style={styles.logo} />
         </View>
       </View>
-
+        
       <View style={styles.profileHeader}>
-        <Text style={[styles.companyName, { color: theme.text }]}>{company.name}</Text>
-        <Text style={[styles.industry, { color: theme.text + "80" }]}>{company.industry}</Text>
-
+        <Text
+          style={[
+            styles.companyName,
+            {
+              color: theme.text,
+              textTransform: "capitalize",
+              width: "100%",
+              textAlign: "center",
+            },
+          ]}
+        >
+          {company.name}
+        </Text>
+        <Text
+          style={[
+            styles.industry,
+            { color: theme.text + "80", textAlign: "center" },
+          ]}
+        >
+          {company?.address.toUpperCase()}
+        </Text>
         <View style={styles.locationContainer}>
-          <Ionicons name="location-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.locationText, { color: theme.text + "80" }]}>{company.location}</Text>
+          <Ionicons
+            name="location-outline"
+            size={15}
+            color={theme.text + "80"}
+          />
+          <Text style={[styles.locationText, { color: theme.text + "80" }]}>
+            {company.location}
+          </Text>
         </View>
-
         <View style={styles.statsContainer}>
           <View style={[styles.statItem, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statValue, { color: theme.text }]}>{company.stats.jobsPosted}</Text>
-            <Text style={[styles.statLabel, { color: theme.text + "80" }]}>Jobs Posted</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {company?.jobs.length || "0"}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.text + "80" }]}>
+              Jobs Posted
+            </Text>
           </View>
           <View style={[styles.statItem, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statValue, { color: theme.text }]}>{company.stats.activeJobs}</Text>
-            <Text style={[styles.statLabel, { color: theme.text + "80" }]}>Active Jobs</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {company?.jobs?.filter((item: any) => item.status === 'open')?.length || "0"}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.text + "80" }]}>
+              Active Jobs
+            </Text>
           </View>
           <View style={[styles.statItem, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statValue, { color: theme.text }]}>{company.stats.totalHires}</Text>
-            <Text style={[styles.statLabel, { color: theme.text + "80" }]}>Total Hires</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {company?.employees_count || "0"}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.text + "80" }]}>
+              Total Hires
+            </Text>
           </View>
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={[styles.editButton, { backgroundColor: theme.accent }]}>
+          <TouchableOpacity
+          onPress={() => setIsModalVisible(true)}
+            style={[styles.editButton, { backgroundColor: theme.accent }]}
+          >
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.shareButton, { borderColor: theme.accent }]}>
-            <Ionicons name="share-social-outline" size={20} color={theme.accent} />
+          <TouchableOpacity
+            style={[styles.shareButton, { borderColor: theme.accent }]}
+          >
+            <Ionicons
+              name="share-social-outline"
+              size={20}
+              color={theme.accent}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -194,33 +227,63 @@ const CompanyProfileScreen = () => {
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === "about" && { borderBottomColor: theme.accent, borderBottomWidth: 2 },
+            activeTab === "about" && {
+              borderBottomColor: theme.accent,
+              borderBottomWidth: 2,
+            },
           ]}
           onPress={() => setActiveTab("about")}
-        >
-          <Text style={[styles.tabButtonText, { color: activeTab === "about" ? theme.accent : theme.text + "80" }]}>
+          >
+          <Text
+            style={[
+              styles.tabButtonText,
+              {
+                color: activeTab === "about" ? theme.accent : theme.text + "80",
+              },
+            ]}
+          >
             About
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === "jobs" && { borderBottomColor: theme.accent, borderBottomWidth: 2 },
+            activeTab === "jobs" && {
+              borderBottomColor: theme.accent,
+              borderBottomWidth: 2,
+            },
           ]}
           onPress={() => setActiveTab("jobs")}
         >
-          <Text style={[styles.tabButtonText, { color: activeTab === "jobs" ? theme.accent : theme.text + "80" }]}>
+          <Text
+            style={[
+              styles.tabButtonText,
+              {
+                color: activeTab === "jobs" ? theme.accent : theme.text + "80",
+              },
+            ]}
+          >
             Jobs
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === "team" && { borderBottomColor: theme.accent, borderBottomWidth: 2 },
+            activeTab === "team" && {
+              borderBottomColor: theme.accent,
+              borderBottomWidth: 2,
+            },
           ]}
           onPress={() => setActiveTab("team")}
         >
-          <Text style={[styles.tabButtonText, { color: activeTab === "team" ? theme.accent : theme.text + "80" }]}>
+          <Text
+            style={[
+              styles.tabButtonText,
+              {
+                color: activeTab === "team" ? theme.accent : theme.text + "80",
+              },
+            ]}
+          >
             Team
           </Text>
         </TouchableOpacity>
@@ -228,33 +291,68 @@ const CompanyProfileScreen = () => {
 
       {activeTab === "about" && (
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>About Us</Text>
-          <Text style={[styles.aboutText, { color: theme.text + "90" }]}>{company.about}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            About Us
+          </Text>
+          <Text style={[styles.aboutText, { color: theme.text + "90" }]}>
+            {company.description}
+          </Text>
 
           <View style={styles.companyDetails}>
             <View style={styles.detailItem}>
-              <Text style={[styles.detailLabel, { color: theme.text + "80" }]}>Website</Text>
-              <Text style={[styles.detailValue, { color: theme.text }]}>{company.website}</Text>
+              <Text style={[styles.detailLabel, { color: theme.text + "80" }]}>
+                Website
+              </Text>
+              <Text style={[styles.detailValue, { color: theme.text }]}>
+                {company.website}
+              </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={[styles.detailLabel, { color: theme.text + "80" }]}>Founded</Text>
-              <Text style={[styles.detailValue, { color: theme.text }]}>{company.founded}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={[styles.detailLabel, { color: theme.text + "80" }]}>Company Size</Text>
-              <Text style={[styles.detailValue, { color: theme.text }]}>{company.size}</Text>
+              <Text style={[styles.detailLabel, { color: theme.text + "80" }]}>
+                Founded
+              </Text>
+              <Text style={[styles.detailValue, { color: theme.text }]}>
+                {company.founded_at
+                  ? new Date(company.founded_at).getFullYear()
+                  : ""}
+              </Text>
             </View>
           </View>
 
-          <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 20 }]}>Social Media</Text>
+          <Text
+            style={[styles.sectionTitle, { color: theme.text, marginTop: 20 }]}
+          >
+            Social Media
+          </Text>
           <View style={styles.socialLinks}>
-            <TouchableOpacity style={[styles.socialButton, { backgroundColor: "#0077B5" }]}>
+            <TouchableOpacity
+              onPress={() => {
+                if (socialLinks?.linkedin) {
+                  Linking.openURL(socialLinks.linkedin);
+                }
+              }}
+              style={[styles.socialButton, { backgroundColor: "#0077B5" }]}
+            >
               <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.socialButton, { backgroundColor: "#1DA1F2" }]}>
+            <TouchableOpacity
+              onPress={() => {
+                if (socialLinks?.twitter) {
+                  Linking.openURL(socialLinks.twitter);
+                }
+              }}
+              style={[styles.socialButton, { backgroundColor: "#1DA1F2" }]}
+            >
               <Ionicons name="logo-twitter" size={20} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.socialButton, { backgroundColor: "#4267B2" }]}>
+            <TouchableOpacity
+              onPress={() => {
+                if (socialLinks?.facebook) {
+                  Linking.openURL(socialLinks.facebook);
+                }
+              }}
+              style={[styles.socialButton, { backgroundColor: "#4267B2" }]}
+            >
               <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -264,41 +362,78 @@ const CompanyProfileScreen = () => {
       {activeTab === "jobs" && (
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Active Jobs</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Active Jobs
+            </Text>
             {/* @ts-ignore */}
             <TouchableOpacity onPress={() => navigation.navigate("Jobs")}>
-              <Text style={[styles.seeAll, { color: theme.accent }]}>See All</Text>
+              <Text style={[styles.seeAll, { color: theme.accent }]}>
+                See All
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {company.activeJobs.map((job) => (
+          {company?.jobs.map((job: any) => (
             <TouchableOpacity
               key={job.id}
               style={[styles.jobCard, { backgroundColor: theme.card }]}
-              onPress={() => navigation.navigate("JobDetails", { jobId: job.id })}
+              onPress={() =>
+                navigation.navigate("JobDetails", { jobId: job.id })
+              }
             >
               <View style={styles.jobHeader}>
-                <Text style={[styles.jobTitle, { color: theme.text }]}>{job.title}</Text>
-                <View style={[styles.jobTypeBadge, { backgroundColor: theme.accent + "20" }]}>
-                  <Text style={[styles.jobTypeText, { color: theme.accent }]}>{job.type}</Text>
+                <Text style={[styles.jobTitle, { color: theme.text }]}>
+                  {job.post.title}
+                </Text>
+                <View
+                  style={[
+                    styles.jobTypeBadge,
+                    { backgroundColor: theme.accent + "20" },
+                  ]}
+                >
+                  <Text style={[styles.jobTypeText, { color: theme.accent }]}>
+                    {job.type_job}
+                  </Text>
                 </View>
               </View>
 
               <View style={styles.jobDetails}>
                 <View style={styles.jobDetail}>
-                  <Ionicons name="location-outline" size={16} color={theme.text + "80"} />
-                  <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{job.location}</Text>
+                  <Ionicons
+                    name="location-outline"
+                    size={16}
+                    color={theme.text + "80"}
+                  />
+                  <Text
+                    style={[styles.jobDetailText, { color: theme.text + "80", textTransform: "uppercase" }]}
+                  >
+                    {job.system}
+                  </Text>
                 </View>
 
                 <View style={styles.jobDetail}>
-                  <Ionicons name="people-outline" size={16} color={theme.text + "80"} />
-                  <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{job.applicants} Applicants</Text>
+                  <Ionicons
+                    name="people-outline"
+                    size={16}
+                    color={theme.text + "80"}
+                  />
+                  <Text
+                    style={[styles.jobDetailText, { color: theme.text + "80" }]}
+                  >
+                    {job.number_of_employee} Applicants
+                  </Text>
                 </View>
 
                 <View style={styles.jobDetail}>
-                  <Ionicons name="time-outline" size={16} color={theme.text + "80"} />
-                  <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>
-                    Posted {new Date(job.postedAt).toLocaleDateString()}
+                  <Ionicons
+                    name="time-outline"
+                    size={16}
+                    color={theme.text + "80"}
+                  />
+                  <Text
+                    style={[styles.jobDetailText, { color: theme.text + "80" }]}
+                  >
+                    Posted {new Date(job.created_at).toLocaleDateString()}
                   </Text>
                 </View>
               </View>
@@ -318,21 +453,37 @@ const CompanyProfileScreen = () => {
       {activeTab === "team" && (
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Recent Hires</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Recent Hires
+            </Text>
             {/* @ts-ignore */}
             <TouchableOpacity onPress={() => navigation.navigate("Team")}>
-              <Text style={[styles.seeAll, { color: theme.accent }]}>See All Team</Text>
+              <Text style={[styles.seeAll, { color: theme.accent }]}>
+                See All Team
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {company.recentHires.map((hire) => (
-            <View key={hire.id} style={[styles.teamMemberCard, { backgroundColor: theme.card }]}>
-              <Image source={{ uri: hire.avatar }} style={styles.memberAvatar} />
+          {company?.employees.map((hire: any) => (
+            <View
+              key={hire.id}
+              style={[styles.teamMemberCard, { backgroundColor: theme.card }]}
+            >
+              <Image
+                source={{ uri: hire.employee.profile_picture }}
+                style={styles.memberAvatar}
+              />
               <View style={styles.memberInfo}>
-                <Text style={[styles.memberName, { color: theme.text }]}>{hire.name}</Text>
-                <Text style={[styles.memberPosition, { color: theme.text + "80" }]}>{hire.position}</Text>
+                <Text style={[styles.memberName, { color: theme.text }]}>
+                  {hire.employee.username}
+                </Text>
+                <Text
+                  style={[styles.memberPosition, { color: theme.text + "80" }]}
+                >
+                  {hire.position}
+                </Text>
                 <Text style={[styles.hireDate, { color: theme.text + "60" }]}>
-                  Joined {new Date(hire.hiredAt).toLocaleDateString()}
+                  Joined {new Date(hire.created_at).toLocaleDateString()}
                 </Text>
               </View>
             </View>
@@ -343,13 +494,15 @@ const CompanyProfileScreen = () => {
             // @ts-ignore
             onPress={() => navigation.navigate("Team")}
           >
-            <Text style={[styles.viewTeamText, { color: theme.accent }]}>View All Team Members</Text>
+            <Text style={[styles.viewTeamText, { color: theme.accent }]}>
+              View All Team Members
+            </Text>
           </TouchableOpacity>
         </View>
       )}
     </ScrollView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -365,9 +518,9 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 35,
     paddingBottom: 20,
     position: "absolute",
     top: 0,
@@ -396,6 +549,7 @@ const styles = StyleSheet.create({
   coverImage: {
     width: "100%",
     height: "100%",
+    objectFit: "cover",
   },
   logoContainer: {
     position: "absolute",
@@ -431,17 +585,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   industry: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Poppins-Regular",
     marginBottom: 12,
   },
   locationContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   locationText: {
-    fontSize: 14,
+    fontSize: 10,
     fontFamily: "Poppins-Regular",
     marginLeft: 6,
   },
@@ -519,7 +673,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontFamily: "Poppins-Bold",
-    marginBottom: 12,
   },
   seeAll: {
     fontSize: 14,
@@ -529,16 +682,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins-Regular",
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   companyDetails: {
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   detailItem: {
     marginBottom: 10,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 15,
+    color: "#000",
     fontFamily: "Poppins-Medium",
     marginBottom: 4,
   },
@@ -654,7 +808,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Poppins-Medium",
   },
-})
+});
 
-export default withAuth(CompanyProfileScreen)
-
+export default withAuth(CompanyProfileScreen);
