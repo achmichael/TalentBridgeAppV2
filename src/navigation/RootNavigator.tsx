@@ -1,4 +1,5 @@
 "use client";
+
 import { createStackNavigator } from "@react-navigation/stack";
 import { useAuth } from "../contexts/AuthContext";
 import AuthNavigator from "./AuthNavigator";
