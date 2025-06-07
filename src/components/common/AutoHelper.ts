@@ -1,3 +1,5 @@
+import * as ImagePicker from 'expo-image-picker';
+
 const fetcher = async (url: string, options: RequestInit = {}) => {
   try {
     const response = await fetch(url, options);
@@ -16,17 +18,17 @@ const fetcher = async (url: string, options: RequestInit = {}) => {
 const poster = async (url: string, options: RequestInit = {}) => {
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
       },
       body: JSON.stringify(options.body || {}),
-      ...options
+      ...options,
     });
 
     const result = await response.json();
-    console.log('post response', result);
+
     if (!response.ok) {
       throw new Error(result.message || result.errors || "An error occurred");
     }
@@ -35,5 +37,20 @@ const poster = async (url: string, options: RequestInit = {}) => {
   } catch (error: any) {
     return { data: null, error: error.message || "Post failed" };
   }
-}
-export { fetcher, poster };
+};
+
+const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      return result.assets[0].uri;
+    } else {
+      alert('You did not select any image.');
+    }
+  };
+
+export { fetcher, poster, pickImageAsync };
