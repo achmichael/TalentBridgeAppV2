@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,44 +9,70 @@ import {
   TouchableOpacity,
   TextInput,
   RefreshControl,
-} from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import type { StackNavigationProp } from "@react-navigation/stack"
-import { Ionicons } from "@expo/vector-icons"
-import { useTheme } from "../../contexts/ThemeContext"
-import type { CompanyStackParamList } from "../../navigation/CompanyNavigator"
-import withAuth from "@/src/hoc/withAuth"
-import { useDashboard } from "@/src/contexts/Company/DashboardContext"
-import LoadingScreen from "../common/LoadingScreen"
-import { Job } from "@/src/types/Job"
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { StackNavigationProp } from "@react-navigation/stack";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../contexts/ThemeContext";
+import type { CompanyStackParamList } from "../../navigation/CompanyNavigator";
+import withAuth from "@/src/hoc/withAuth";
+import { useDashboard } from "@/src/contexts/Company/DashboardContext";
+import LoadingScreen from "../common/LoadingScreen";
+import { Job } from "@/src/types/Job";
 
-type CompanyJobsScreenNavigationProp = StackNavigationProp<CompanyStackParamList>
-
+type CompanyJobsScreenNavigationProp =
+  StackNavigationProp<CompanyStackParamList>;
 
 const CompanyJobsScreen = () => {
-  const navigation = useNavigation<CompanyJobsScreenNavigationProp>()
-  const { theme } = useTheme()
-  const [activeFilter, setActiveFilter] = useState("all")
-  const [refreshing, setRefreshing] = useState(false)
-  const { filteredData, isLoading, setSearchQuery, searchQuery } = useDashboard();
+  const navigation = useNavigation<CompanyJobsScreenNavigationProp>();
+  const { theme } = useTheme();
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
+  const { filteredData, isLoading, setSearchQuery, searchQuery, refetch } =
+    useDashboard();
 
   const onRefresh = async () => {
-    setRefreshing(true)
-    setRefreshing(false)
-  }
+    setRefreshing(true);
+    try {
+      await refetch();
+      console.log("Data refreshed successfully");
+    } catch (error) {
+      console.error("Failed to refresh data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+
+  useEffect(() => {
+    if (!filteredData?.jobs) {
+      setFilteredJobs([]);
+      return;
+    }
+
+    if (activeFilter === "all") {
+      setFilteredJobs(filteredData.jobs);
+    } else {
+      const filtered = filteredData.jobs.filter(
+        (job: Job) => job.status === activeFilter
+      );
+      setFilteredJobs(filtered);
+    }
+  }, [activeFilter, filteredData?.jobs]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "open":
-        return "#10B981" // Green
+        return "#10B981";
       case "closed":
-        return "#EF4444" // Red
+        return "#EF4444";
       case "draft":
-        return "#F59E0B" // Amber
+        return "#F59E0B";
       default:
-        return theme.text
+        return theme.text;
     }
-  }
+  };
 
   const renderJobItem = ({ item }: { item: Job }) => (
     <TouchableOpacity
@@ -55,7 +81,9 @@ const CompanyJobsScreen = () => {
       activeOpacity={0.7}
     >
       <View style={styles.jobHeader}>
-        <Text style={[styles.jobTitle, { color: theme.text }]}>{item?.post?.title}</Text>
+        <Text style={[styles.jobTitle, { color: theme.text }]}>
+          {item?.post?.title}
+        </Text>
         <View
           style={[
             styles.statusBadge,
@@ -77,26 +105,53 @@ const CompanyJobsScreen = () => {
         </View>
       </View>
 
-      <Text style={[styles.jobDescription, { color: theme.text + "80" }]} numberOfLines={2}>
+      <Text
+        style={[styles.jobDescription, { color: theme.text + "80" }]}
+        numberOfLines={2}
+      >
         {item?.post?.description}
       </Text>
 
       <View style={styles.jobDetails}>
         <View style={styles.jobDetail}>
-          <Ionicons name="briefcase-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'capitalize' }]}>{item.type_job}</Text>
+          <Ionicons
+            name="briefcase-outline"
+            size={16}
+            color={theme.text + "80"}
+          />
+          <Text
+            style={[
+              styles.jobDetailText,
+              { color: theme.text + "80", textTransform: "capitalize" },
+            ]}
+          >
+            {item.type_job}
+          </Text>
         </View>
 
         <View style={styles.jobDetail}>
-          <Ionicons name="location-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.jobDetailText, { color: theme.text + "80", textTransform: 'uppercase' }]}>{item.system}</Text>
+          <Ionicons
+            name="location-outline"
+            size={16}
+            color={theme.text + "80"}
+          />
+          <Text
+            style={[
+              styles.jobDetailText,
+              { color: theme.text + "80", textTransform: "uppercase" },
+            ]}
+          >
+            {item.system}
+          </Text>
         </View>
       </View>
 
       <View style={styles.jobFooter}>
         <View style={styles.jobDetail}>
           <Ionicons name="people-outline" size={16} color={theme.text + "80"} />
-          <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>{item.post.applications_count} Applicants</Text>
+          <Text style={[styles.jobDetailText, { color: theme.text + "80" }]}>
+            {item.post.applications_count} Applicants
+          </Text>
         </View>
 
         <View style={styles.jobDetail}>
@@ -107,17 +162,17 @@ const CompanyJobsScreen = () => {
         </View>
       </View>
     </TouchableOpacity>
-  )
+  );
 
   const filterOptions = [
     { id: "all", label: "All Jobs" },
-    { id: "active", label: "Active" },
+    { id: "open", label: "Active" },
     { id: "closed", label: "Closed" },
     { id: "draft", label: "Draft" },
-  ]
+  ];
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+  const HeaderComponent = () => (
+    <>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>Manage Jobs</Text>
         <TouchableOpacity
@@ -146,78 +201,110 @@ const CompanyJobsScreen = () => {
       </View>
 
       <View style={styles.filtersContainer}>
-        <FlatList
-          data={filterOptions}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.filtersList}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.filterItem,
-                {
-                  backgroundColor: activeFilter === item.id ? theme.accent : theme.card,
-                },
-              ]}
-              onPress={() => setActiveFilter(item.id)}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  {
-                    color: activeFilter === item.id ? "#FFFFFF" : theme.text,
-                  },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
+        <ScrollableFilters />
       </View>
+    </>
+  );
 
-      {isLoading ? (
-       <LoadingScreen />
-      ) : filteredData?.jobs && filteredData?.jobs?.length > 0 ? (
-        <FlatList
-          data={filteredData.jobs}
-          renderItem={renderJobItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.jobsList}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.accent]} />}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="briefcase-outline" size={50} color={theme.text + "40"} />
-          <Text style={[styles.emptyText, { color: theme.text }]}>No jobs found</Text>
-          <Text style={[styles.emptySubtext, { color: theme.text + "80" }]}>
-            {activeFilter === "all"
-              ? "You haven't posted any jobs yet"
-              : `You don't have any ${activeFilter} jobs`}
-          </Text>
-          <TouchableOpacity
-            style={[styles.emptyButton, { backgroundColor: theme.accent }]}
-            onPress={() => navigation.navigate("CreateJob")}
+  const ScrollableFilters = () => (
+    <FlatList
+      data={filterOptions}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.filtersList}
+      renderItem={({ item }) => (
+        <TouchableOpacity
+          style={[
+            styles.filterItem,
+            {
+              backgroundColor:
+                activeFilter === item.id ? theme.accent : theme.card,
+            },
+          ]}
+          onPress={() => setActiveFilter(item.id)}
+        >
+          <Text
+            style={[
+              styles.filterText,
+              {
+                color: activeFilter === item.id ? "#FFFFFF" : theme.text,
+              },
+            ]}
           >
-            <Text style={styles.emptyButtonText}>Create a Job</Text>
-          </TouchableOpacity>
-        </View>
+            {item.label}
+          </Text>
+        </TouchableOpacity>
       )}
+    />
+  );
+
+  const EmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="briefcase-outline" size={50} color={theme.text + "40"} />
+      <Text style={[styles.emptyText, { color: theme.text }]}>
+        No jobs found
+      </Text>
+      <Text style={[styles.emptySubtext, { color: theme.text + "80" }]}>
+        {activeFilter === "all"
+          ? "You haven't posted any jobs yet"
+          : `You don't have any ${activeFilter} jobs`}
+      </Text>
+      <TouchableOpacity
+        style={[styles.emptyButton, { backgroundColor: theme.accent }]}
+        onPress={() => navigation.navigate("CreateJob")}
+      >
+        <Text style={styles.emptyButtonText}>Create a Job</Text>
+      </TouchableOpacity>
     </View>
-  )
-}
+  );
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <FlatList
+        data={filteredJobs}
+        renderItem={renderJobItem}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={HeaderComponent}
+        ListEmptyComponent={EmptyComponent}
+        contentContainerStyle={[
+          styles.jobsList, 
+          filteredJobs.length === 0 && styles.emptyListContainer
+        ]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.accent]}
+          />
+        }
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  contentContainer: {
+    paddingBottom: 20,
+    flexGrow: 1, // Ini memastikan bahwa container bisa di-scroll penuh
+    backgroundColor: 'transparent',
+  },
+  emptyListContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
   },
@@ -241,7 +328,6 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 16,
     paddingHorizontal: 12,
     height: 50,
     borderRadius: 10,
@@ -257,11 +343,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   filtersList: {
-    paddingHorizontal: 16,
+    gap: 15
   },
   filterItem: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 5,
     borderRadius: 20,
     marginRight: 8,
   },
@@ -308,7 +394,7 @@ const styles = StyleSheet.create({
   jobDetails: {
     flexDirection: "row",
     marginBottom: 10,
-    columnGap: 5
+    columnGap: 5,
   },
   jobFooter: {
     flexDirection: "row",
@@ -357,7 +443,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Medium",
     fontSize: 14,
   },
-})
+});
 
-export default withAuth(CompanyJobsScreen)
-
+export default withAuth(CompanyJobsScreen);

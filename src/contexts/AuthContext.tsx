@@ -27,10 +27,10 @@ const discovery = {
   revocationEndpoint: "https://oauth2.googleapis.com/revoke",
 } as AuthSessionRedirectUriOptions;
 
-// Define user roles
+
 export type UserRole = "client" | "freelancer" | "company" | "admin";
 
-// Define user interface
+
 export interface User {
   id: string;
   username: string;
