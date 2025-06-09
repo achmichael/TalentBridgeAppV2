@@ -29,7 +29,6 @@ type JobDetailsScreenNavigationProp =
   StackNavigationProp<CompanyStackParamList>;
 
 const fetchJobDetails = async (jobId: string) => {
-  console.log(" Fetching job details for ID:", jobId);
   const response = await fetcher(`${baseUrl}/jobs/${jobId}`);
   if (response.error) {
     throw new Error(response.error);
@@ -53,8 +52,6 @@ const JobDetailsScreen = () => {
     queryKey: ["companyJobDetails", jobId],
     queryFn: () => fetchJobDetails(jobId),
   });
-
-  console.log("Job details fetched:", job);
 
   const handleCloseJob = () => {
     Alert.alert(

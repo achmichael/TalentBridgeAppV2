@@ -22,6 +22,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import withAuth from '@/src/hoc/withAuth';
 import { useTheme } from '@/src/contexts/ThemeContext';
+import { baseUrl } from '@/src/config/baseUrl';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 const positions = [
   'Software Developer',
@@ -36,31 +38,55 @@ const positions = [
   'Sales Representative'
 ];
 
-const statusOptions = ['aktif', 'tidak aktif', 'cuti', 'resign'];
+const statusOptions = ['active', 'inactive', 'cuti', 'resign'];
 
 const AddEmployee = () => {
   const navigation = useNavigation();
   const { theme } = useTheme();
+  const { token } = useAuth();
 
   const addEmployee = async (employee: object) => { 
-
+    try {
+      const res = await fetch(`${baseUrl}/employees/addByCompany`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(employee),
+      });
+      
+      const responseText = await res.text();
+      
+      if (!responseText) {
+        throw new Error('Empty response from server');
+      }
+      
+      try {
+        const responseData = JSON.parse(responseText);
+        return responseData;
+      } catch (parseError) {
+        throw new Error('Invalid JSON response from server');
+      }
+    } catch (error: any) {
+      console.error('Error in addEmployee:', error);
+      throw error;
+    }
   }
   
-  // Form state
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [position, setPosition] = useState('');
-  const [status, setStatus] = useState('aktif');
+  const [status, setStatus] = useState('active');
   const [showPositionDropdown, setShowPositionDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   
-  // Animation values
   const formOpacity = useSharedValue(0);
   const formTranslateY = useSharedValue(50);
   const buttonScale = useSharedValue(1);
   
-  // Initialize animations
   React.useEffect(() => {
     formOpacity.value = withTiming(1, { duration: 600 });
     formTranslateY.value = withTiming(0, { duration: 600 });
@@ -80,7 +106,10 @@ const AddEmployee = () => {
   });
   
   const handleAddEmployee = () => {
+    console.log('Add Employee button clicked');
+    
     if (!username || !email || !password || !position) {
+      console.log('Validation failed:', { username, email, password, position });
       Alert.alert('Error', 'Please fill all required fields');
       
       formTranslateY.value = withSequence(
@@ -93,45 +122,53 @@ const AddEmployee = () => {
       return;
     }
     
-    // Animation for button press
+    console.log('Validation passed, starting animation');
     buttonScale.value = withSequence(
       withTiming(0.9, { duration: 100 }),
       withTiming(1.1, { duration: 100 }),
       withTiming(1, { duration: 100 }, () => {
+        console.log('Animation completed, calling submitForm');
         runOnJS(submitForm)();
       })
     );
   };
   
-  const submitForm = () => {
-    // Create new employee object
-    const newEmployee = {
-      id: Math.floor(Math.random() * 1000000),
-      company_id: 'company-uuid-placeholder', // This would come from props or context in a real app
-      employee_id: `user-${Math.floor(Math.random() * 1000000)}`, // This would be the user's ID in a real app
-      username,
-      email,
-      password, // Note: In a real app, you'd never store plain text passwords
-      position,
-      status,
-      employed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
-    // Add employee to context
-    addEmployee(newEmployee);
-    
-    // Show success message
-    Alert.alert(
-      'Success',
-      'Employee added successfully!',
-      [
-        { 
-          text: 'OK', 
-          onPress: () => navigation.goBack() 
-        }
-      ]
-    );
+  const submitForm = async () => {
+    try {
+      console.log('Submitting form with data:', { username, email, password, position, status });
+      
+      const response = await addEmployee({
+        username,
+        email,
+        password,
+        position,
+        status
+      });
+
+      console.log('Response received:', response);
+
+      // Cek respons dengan lebih detail
+      if (!response) {
+        console.error('Response is null or undefined');
+        Alert.alert('Error', 'No response received. Please check your internet connection.');
+        return;
+      }
+
+      // Sukses - bahkan jika tidak ada status property
+      Alert.alert(
+        'Success',
+        response.message || 'Employee added successfully',
+        [
+          { 
+            text: 'OK', 
+            onPress: () => navigation.goBack() 
+          }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Error in submitForm:', error);
+      Alert.alert('Error', error.message || 'Failed to add employee. Please try again.');
+    }
   };
 
 

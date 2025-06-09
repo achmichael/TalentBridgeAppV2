@@ -218,21 +218,21 @@ const CompanyDashboardScreen = () => {
               }
             >
               <Image
-                source={{ uri: applicant?.applicant?.profile_picture || '' }}
+                source={{ uri: applicant?.applicant?.profile_picture || 'https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg' }}
                 style={styles.applicantAvatar}
               />
               <View style={styles.applicantInfo}>
-                <Text style={[styles.applicantName, { color: theme.text }]}>
+                <Text style={[styles.applicantName, { color: theme.text, textTransform: 'capitalize' }]}>
                   {applicant?.applicant?.username}
                 </Text>
                 <Text
                   style={[styles.applicantTitle, { color: theme.text + "80" }]}
                 >
-                  {applicant.applicant?.phone_number}
+                  {applicant.applicant?.phone_number || "No Phone Number"}
                 </Text>
                 <View style={styles.applicantMeta}>
                   <Text style={[styles.appliedFor, { color: theme.accent }]}>
-                    Applied for: {applicant?.post?.title}
+                    Applied for: {job?.post?.title}
                   </Text>
                   <Text
                     style={[styles.appliedTime, { color: theme.text + "60" }]}
