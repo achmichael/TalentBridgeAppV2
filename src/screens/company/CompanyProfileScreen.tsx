@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   coverContainer: {
-    height: 200,
+    height: 250,
     position: "relative",
   },
   coverImage: {

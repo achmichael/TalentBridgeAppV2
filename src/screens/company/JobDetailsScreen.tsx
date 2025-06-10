@@ -323,7 +323,7 @@ const JobDetailsScreen = () => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Requirements
             </Text>
-            {job?.post?.requirements?.map((requirement: any, index: number) => (
+            {JSON.parse(job?.post?.requirements)?.map((requirement: any, index: number) => (
               <View key={index} style={styles.listItem}>
                 <View
                   style={[
@@ -344,7 +344,7 @@ const JobDetailsScreen = () => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Benefits
             </Text>
-            {/* {job.benefits.map((benefit: any, index: number) => (
+            {JSON.parse(job?.post?.benefits)?.map((benefit: any, index: number) => (
               <View key={index} style={styles.listItem}>
                 <View
                   style={[
@@ -358,7 +358,7 @@ const JobDetailsScreen = () => {
                   {benefit}
                 </Text>
               </View>
-            ))} */}
+            ))}
           </View>
 
           <View style={styles.actionButtons}>
