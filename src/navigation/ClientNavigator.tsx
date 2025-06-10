@@ -93,7 +93,6 @@ const ClientTabNavigator = () => {
   )
 }
 
-// Stack Navigator
 const ClientNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

@@ -35,16 +35,16 @@ const CreateJobScreen = () => {
   const [messageModal, setMessageModal] = useState<string>("");
   const [typeModal, setTypeModal] = useState<string>("");
 
-  // Post fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [levelId, setLevelId] = useState(1);
   const [requiredSkills, setRequiredSkills] = useState("");
+  const [requirments, setRequirements] = useState("");
+  const [benefits, setBenefits] = useState("");
   const [minExperienceYears, setMinExperienceYears] = useState("");
   const [categoryId, setCategoryId] = useState(1);
 
-  // Job fields
   const [numberOfEmployee, setNumberOfEmployee] = useState("");
   const [duration, setDuration] = useState("");
   const [status, setStatus] = useState<"open" | "closed">("open");
@@ -100,6 +100,16 @@ const CreateJobScreen = () => {
         ? requiredSkills.split(",").map((skill) => skill.trim())
         : requiredSkills;
 
+    const formattedRequirments = 
+      typeof requirments === "string"
+        ? requirments.split(",").map((skill) => skill.trim())
+        : requirments;
+
+    const formattedBenefits = 
+      typeof benefits === "string"
+        ? benefits.split(",").map((skill) => skill.trim())
+        : benefits;
+
     const jobData = {
       job_title: title,
       description,
@@ -111,6 +121,8 @@ const CreateJobScreen = () => {
       number_of_employee: Number(numberOfEmployee),
       duration: Number(duration),
       status,
+      benefits: JSON.stringify(formattedBenefits),
+      requirments: JSON.stringify(formattedRequirments),
       type_job: typeJob,
       type_salary: typeSalary,
       system,
@@ -319,6 +331,58 @@ const CreateJobScreen = () => {
             />
             <Text style={[styles.helperText, { color: theme.text + "60" }]}>
               Tip: Separate skills with commas (e.g. React, TypeScript, Node.js)
+            </Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Requirments 
+            </Text>
+            <TextInput
+              style={[
+                styles.textArea,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+              placeholder="List required skills (comma separated)"
+              placeholderTextColor={theme.text + "60"}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              value={requirments}
+              onChangeText={setRequirements}
+            />
+            <Text style={[styles.helperText, { color: theme.text + "60" }]}>
+              Tip: Separate skills with commas (e.g. Bachelor Degree)
+            </Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>
+              Benefits 
+            </Text>
+            <TextInput
+              style={[
+                styles.textArea,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+              placeholder="List required skills (comma separated)"
+              placeholderTextColor={theme.text + "60"}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              value={benefits}
+              onChangeText={setBenefits}
+            />
+            <Text style={[styles.helperText, { color: theme.text + "60" }]}>
+              Tip: Separate skills with commas (e.g. Bachelor Degree)
             </Text>
           </View>
 

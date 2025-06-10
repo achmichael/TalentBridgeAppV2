@@ -19,10 +19,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import type { CompanyStackParamList } from "../../navigation/CompanyNavigator";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "@/src/components/common/AutoHelper";
-import { baseUrl } from "@/src/config/baseUrl";
+import { baseUrl, domainUrl } from "@/src/config/baseUrl";
 import EditProfileModal from "@/src/components/EditProfileModal";
 import LoadingScreen from "../common/LoadingScreen";
 import withAuth from "@/src/hoc/withAuth";
+import * as Clipboard from "expo-clipboard";
+import AlertModal from "@/src/components/ModalAlert";
 
 type CompanyProfileScreenNavigationProp =
   StackNavigationProp<CompanyStackParamList>;
@@ -62,6 +64,7 @@ const CompanyProfileScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("about");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
 
   const {
     data: company,
@@ -77,6 +80,19 @@ const CompanyProfileScreen = () => {
     await refetch();
     setRefreshing(false);
   };
+
+  const copyLink = async () => {
+    await Clipboard.setStringAsync(`${domainUrl}/profile/${user?.username}`);
+    setAlertVisible(true);
+    
+    <AlertModal
+      visible={alertVisible}
+      onClose={() => setAlertVisible(false)}
+      title="Link Copied"
+      message="The profile link has been copied to your clipboard."
+      type="info"
+    />
+  }
 
   if (isLoading || !company) {
     return <LoadingScreen />;
@@ -212,6 +228,7 @@ const CompanyProfileScreen = () => {
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={copyLink}
             style={[styles.shareButton, { borderColor: theme.accent }]}
           >
             <Ionicons
@@ -470,7 +487,7 @@ const CompanyProfileScreen = () => {
               style={[styles.teamMemberCard, { backgroundColor: theme.card }]}
             >
               <Image
-                source={{ uri: hire.employee.profile_picture }}
+                source={{ uri: hire.employee.profile_picture || 'https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg' }}
                 style={styles.memberAvatar}
               />
               <View style={styles.memberInfo}>

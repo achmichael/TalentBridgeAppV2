@@ -323,7 +323,7 @@ const JobDetailsScreen = () => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Requirements
             </Text>
-            {/* {job.requirements.map((requirement: any, index: number) => (
+            {job?.post?.requirements?.map((requirement: any, index: number) => (
               <View key={index} style={styles.listItem}>
                 <View
                   style={[
@@ -337,7 +337,7 @@ const JobDetailsScreen = () => {
                   {requirement}
                 </Text>
               </View>
-            ))} */}
+            ))}
           </View>
 
           <View style={styles.section}>
