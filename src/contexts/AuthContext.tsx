@@ -7,7 +7,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import useLogin from "@/hooks/use-login";
 import useRegister from "@/hooks/use-register";
-import { redirectBasedOnRole } from "../components/common/navigation";
+import { redirectBasedOnRole, redirectToCompletedProfile } from "../components/common/navigation";
 import { AuthSessionRedirectUriOptions } from "expo-auth-session";
 import { baseUrl } from "../config/baseUrl";
 
@@ -158,7 +158,11 @@ export const AuthProvider: React.FC<{
             setIsAuthenticated(true);
             setIsLoading(false);
             setTimeout(() => {
-              redirectBasedOnRole(role);
+              if (role && role !== 'freelancer' && role !== 'company') {
+                redirectBasedOnRole(role);
+              }else {
+                redirectToCompletedProfile(role);
+              }
             }, 100);
           }
         } catch (error) {

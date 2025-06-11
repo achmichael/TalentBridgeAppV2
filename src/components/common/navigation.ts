@@ -22,10 +22,18 @@ export function redirectBasedOnRole(role: string) {
       default:
         navigationRef.navigate("Auth" as never);
     }
-  }else {
+  } else {
     console.log("Navigation is not ready");
   }
 }
+
+export const redirectToCompletedProfile = (role: string) => {
+  if (role === "freelancer") {
+    navigationRef.navigate("FreelancerRegistration" as never);
+  } else if (role === "company") {
+    navigationRef.navigate("CompanyRegistration" as never);
+  }
+};
 
 export const redirectToAuth = (navigation: any) => {
   if (!navigation) {
