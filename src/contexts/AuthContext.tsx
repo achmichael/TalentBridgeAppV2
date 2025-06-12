@@ -158,11 +158,11 @@ export const AuthProvider: React.FC<{
             setIsAuthenticated(true);
             setIsLoading(false);
             setTimeout(() => {
-              if (role && role !== 'freelancer' && role !== 'company') {
+              // if (role && role !== 'freelancer' && role !== 'company') {
                 redirectBasedOnRole(role);
-              }else {
-                redirectToCompletedProfile(role);
-              }
+              // }else {
+                // redirectToCompletedProfile(role);
+              // }
             }, 100);
           }
         } catch (error) {

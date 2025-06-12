@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useTheme } from "./ThemeContext";
-import { baseUrl } from "../config/baseUrl";
-import { useAuth } from "./AuthContext";
-import LoadingScreen from "../screens/common/LoadingScreen";
-import { Job } from "../types/Job";
-import { History } from "../types/History";
-import { Application } from "../types/Application";
+import { useTheme } from "../ThemeContext";
+import { baseUrl } from "../../config/baseUrl";
+import { useAuth } from "../AuthContext";
+import LoadingScreen from "../../screens/common/LoadingScreen";
+import { Job } from "../../types/Job";
+import { History } from "../../types/History";
+import { Application } from "../../types/Application";
 
 interface DashboardData {
   data: {
@@ -20,11 +20,11 @@ interface DashboardContextType {
   data: DashboardData | null;
 }
 
-const DashboardFreelancerContext = createContext<DashboardContextType | undefined>(
+const DashboardClientContext = createContext<DashboardContextType | undefined>(
   undefined
 );
 
-export const DashboardFreelancerProvider: React.FC<{
+export const DashboardClientProvider: React.FC<{
   children: React.ReactNode;
   searchQuery?: string;
 }> = ({ children, searchQuery }) => {
@@ -50,6 +50,7 @@ export const DashboardFreelancerProvider: React.FC<{
         });
         
         const result = await response.json();
+        
         if (!response.ok) {
           throw new Error(result.message || "Failed to fetch dashboard data");
         }
@@ -101,14 +102,14 @@ export const DashboardFreelancerProvider: React.FC<{
   }
 
   return (
-    <DashboardFreelancerContext.Provider value={{ isLoading, data }}>
+    <DashboardClientContext.Provider value={{ isLoading, data }}>
       {children}
-    </DashboardFreelancerContext.Provider>
+    </DashboardClientContext.Provider>
   );
 };
 
 export const useDashboard = () => {
-  const context = useContext(DashboardFreelancerContext);
+  const context = useContext(DashboardClientContext);
   if (context === undefined) throw new Error("useDashboard must be used within a DashboardProvider");
   return context;
 }

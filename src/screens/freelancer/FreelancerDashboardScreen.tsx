@@ -19,119 +19,77 @@ import type { FreelancerStackParamList } from "../../navigation/FreelancerNaviga
 import { useQuery } from "@tanstack/react-query";
 import DashboardSkeleton from "../../components/skeletons/DashboardSkeleton";
 import withAuth from "@/src/hoc/withAuth";
+import { fetcher } from "@/src/components/common/AutoHelper";
+import { baseUrl } from "@/src/config/baseUrl";
 
 type FreelancerDashboardScreenNavigationProp =
   StackNavigationProp<FreelancerStackParamList>;
 
-// Mock data fetching functions
-const fetchRecommendedJobs = async () => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+const fetchRecommendedJobs = async (id: string | undefined, token: string | null | undefined) => {
+  try {
+    const { data, error } = await fetcher(
+      `${baseUrl}/freelancers/posts/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      }
+    );
 
-  return [
-    {
-      id: "1",
-      title: "React Native Developer Needed",
-      client: {
-        name: "John Smith",
-        avatar: "https://ui-avatars.com/api/?name=John+Smith",
-        rating: 4.8,
-      },
-      budget: 1500,
-      deadline: "2023-12-15",
-      description:
-        "Looking for an experienced React Native developer to build a mobile app.",
-      skills: ["React Native", "JavaScript", "TypeScript"],
-      postedAt: "2023-11-20",
-    },
-    {
-      id: "2",
-      title: "Mobile App UI/UX Designer",
-      client: {
-        name: "Sarah Johnson",
-        avatar: "https://ui-avatars.com/api/?name=Sarah+Johnson",
-        rating: 4.9,
-      },
-      budget: 2000,
-      deadline: "2023-12-20",
-      description:
-        "Need a talented designer to create UI/UX for a mobile application.",
-      skills: ["UI/UX", "Figma", "Mobile Design"],
-      postedAt: "2023-11-22",
-    },
-    {
-      id: "3",
-      title: "Expo Developer for Quick Project",
-      client: {
-        name: "Mike Brown",
-        avatar: "https://ui-avatars.com/api/?name=Mike+Brown",
-        rating: 4.7,
-      },
-      budget: 800,
-      deadline: "2023-12-10",
-      description:
-        "Looking for an Expo developer for a small project. Quick turnaround needed.",
-      skills: ["Expo", "React Native", "JavaScript"],
-      postedAt: "2023-11-23",
-    },
-  ];
+    if (error) throw new Error(error);
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching company profile:", error);
+    throw error;
+  }
 };
 
-const fetchActiveProjects = async () => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+const fetchActiveProjects = async (id: string | undefined, token: string | null | undefined) => {
+  try {
+    const { data, error } = await fetcher(
+      `${baseUrl}/freelancers/active-jobs/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      }
+    );
 
-  return [
-    {
-      id: "1",
-      title: "E-commerce Mobile App",
-      client: {
-        name: "Tech Solutions Inc.",
-        avatar: "https://ui-avatars.com/api/?name=Tech+Solutions",
-      },
-      progress: 65,
-      dueDate: "2023-12-30",
-      payment: 3500,
-      status: "in progress",
-    },
-    {
-      id: "2",
-      title: "Social Media Dashboard",
-      client: {
-        name: "Digital Marketing Co.",
-        avatar: "https://ui-avatars.com/api/?name=Digital+Marketing",
-      },
-      progress: 40,
-      dueDate: "2024-01-15",
-      payment: 2800,
-      status: "in progress",
-    },
-  ];
+    if (error) throw new Error(error);
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching company profile:", error);
+    throw error;
+  }
 };
 
 const FreelancerDashboardScreen = () => {
   const navigation = useNavigation<FreelancerDashboardScreenNavigationProp>();
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
-  // Fetch recommended jobs
   const {
     data: jobs,
     isLoading: isLoadingJobs,
     refetch: refetchJobs,
   } = useQuery({
     queryKey: ["recommendedJobs"],
-    queryFn: fetchRecommendedJobs,
+    queryFn: () => fetchRecommendedJobs(user?.id, token),
   });
 
-  // Fetch active projects
   const {
     data: projects,
     isLoading: isLoadingProjects,
     refetch: refetchProjects,
   } = useQuery({
     queryKey: ["activeProjects"],
-    queryFn: fetchActiveProjects,
+    queryFn: () => fetchActiveProjects(user?.id, token),
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -146,6 +104,9 @@ const FreelancerDashboardScreen = () => {
     return <DashboardSkeleton />;
   }
 
+  console.log("Jobs:", jobs);
+  console.log("Projects:", projects);
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
@@ -154,11 +115,10 @@ const FreelancerDashboardScreen = () => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={[styles.greeting, { color: theme.text }]}>
-            Hello, {user?.username}
+            Hello, {user?.username && user.username.charAt(0).toUpperCase() + user.username.slice(1)}
           </Text>
           <Text style={[styles.subGreeting, { color: theme.text + "80" }]}>
             Find your next opportunity
@@ -175,11 +135,13 @@ const FreelancerDashboardScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.secondary }]}>
-          <Text style={styles.statsNumber}>$5,200</Text>
+          <Text style={styles.statsNumber}>
+            {Number(520).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+          </Text>
           <Text style={styles.statsLabel}>Earnings</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
-          <Text style={styles.statsNumber}>2</Text>
+          <Text style={styles.statsNumber}>{projects.length || 0}</Text>
           <Text style={styles.statsLabel}>Active Projects</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
@@ -204,7 +166,7 @@ const FreelancerDashboardScreen = () => {
         </View>
 
         {projects && projects.length > 0 ? (
-          projects.map((project) => (
+          projects.map((project: any) => (
             <View
               key={project.id}
               style={[styles.projectCard, { backgroundColor: theme.card }]}
@@ -212,7 +174,7 @@ const FreelancerDashboardScreen = () => {
               <View style={styles.projectHeader}>
                 <View style={styles.clientInfo}>
                   <Image
-                    source={{ uri: project.client.avatar }}
+                    source={{ uri: project.client?.profile_picture }}
                     style={styles.clientAvatar}
                   />
                   <View>
@@ -222,7 +184,7 @@ const FreelancerDashboardScreen = () => {
                     <Text
                       style={[styles.clientName, { color: theme.text + "80" }]}
                     >
-                      {project.client.name}
+                      {project.client.username}
                     </Text>
                   </View>
                 </View>
@@ -337,7 +299,7 @@ const FreelancerDashboardScreen = () => {
         </View>
 
         {jobs &&
-          jobs.map((job) => (
+          jobs?.map((job: any) => (
             <TouchableOpacity
               key={job.id}
               style={[styles.jobCard, { backgroundColor: theme.card }]}
@@ -351,24 +313,18 @@ const FreelancerDashboardScreen = () => {
                   {job.title}
                 </Text>
                 <Text style={[styles.jobBudget, { color: theme.secondary }]}>
-                  ${job.budget}
+                  {job.price?.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
                 </Text>
               </View>
 
               <View style={styles.clientRow}>
                 <Image
-                  source={{ uri: job.client.avatar }}
+                  source={{ uri: job.client?.profile_picture || 'https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg' }}
                   style={styles.clientAvatar}
                 />
                 <Text style={[styles.clientName, { color: theme.text + "80" }]}>
-                  {job.client.name}
+                  {job?.user?.username?.charAt(0).toUpperCase() + job?.user?.username?.slice(1)}
                 </Text>
-                <View style={styles.ratingContainer}>
-                  <Ionicons name="star" size={14} color="#FFD700" />
-                  <Text style={[styles.ratingText, { color: theme.text }]}>
-                    {job.client.rating}
-                  </Text>
-                </View>
               </View>
 
               <Text
@@ -379,7 +335,9 @@ const FreelancerDashboardScreen = () => {
               </Text>
 
               <View style={styles.skillsContainer}>
-                {job.skills.map((skill, index) => (
+                {(typeof job?.required_skills === 'string' 
+                  ? JSON.parse(job.required_skills || '[]')
+                  : job?.required_skills || [])?.map((skill: any, index: number) => (
                   <View
                     key={index}
                     style={[
@@ -406,11 +364,18 @@ const FreelancerDashboardScreen = () => {
                   <Text
                     style={[styles.jobDetailText, { color: theme.text + "80" }]}
                   >
-                    Posted {new Date(job.postedAt).toLocaleDateString()}
+                    Posted {new Date(job.created_at).toLocaleDateString()}
                   </Text>
                 </View>
 
-                <View style={styles.jobDetail}>
+                <View style={[styles.ratingContainer, { backgroundColor: job.status === 'open' ? theme.secondary + "50" : theme.primary + "20" }]}>
+                  <Ionicons name="pricetags" size={13} color={theme.secondary + "90"} />
+                  <Text style={[styles.ratingText, { color: theme.text }]}>
+                    {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                  </Text>
+                </View>
+
+                {/* <View style={styles.jobDetail}>
                   <Ionicons
                     name="calendar-outline"
                     size={14}
@@ -421,7 +386,7 @@ const FreelancerDashboardScreen = () => {
                   >
                     Due {new Date(job.deadline).toLocaleDateString()}
                   </Text>
-                </View>
+                </View> */}
               </View>
             </TouchableOpacity>
           ))}
@@ -607,7 +572,7 @@ const styles = StyleSheet.create({
   jobHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginBottom: 10,
   },
   jobTitle: {
@@ -617,7 +582,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   jobBudget: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Poppins-Bold",
   },
   clientRow: {
@@ -628,12 +593,15 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
     marginLeft: 10,
   },
   ratingText: {
     fontSize: 12,
     fontFamily: "Poppins-Medium",
-    marginLeft: 3,
+    marginLeft: 5,
   },
   jobDescription: {
     fontSize: 14,
