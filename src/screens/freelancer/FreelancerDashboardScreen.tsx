@@ -150,7 +150,6 @@ const FreelancerDashboardScreen = () => {
         </View>
       </View>
 
-      {/* Active Projects */}
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
