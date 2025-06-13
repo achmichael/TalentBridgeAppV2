@@ -20,14 +20,17 @@ const poster = async (url: string, options: RequestInit = {}) => {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         ...(options.headers || {}),
       },
       body: JSON.stringify(options.body || {}),
       ...options,
     });
+    
+    console.log('raw', response);
 
     const result = await response.json();
+
+    console.log("Poster response:", result);
 
     if (!response.ok) {
       throw new Error(result.message || result.errors || "An error occurred");
@@ -35,7 +38,7 @@ const poster = async (url: string, options: RequestInit = {}) => {
 
     return { data: result, error: null };
   } catch (error: any) {
-    return { data: null, error: error.message || "Post failed" };
+    return { data: null, error: error || "Post failed" };
   }
 };
 

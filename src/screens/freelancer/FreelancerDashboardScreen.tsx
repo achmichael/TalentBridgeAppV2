@@ -33,7 +33,7 @@ const fetchRecommendedJobs = async (id: string | undefined, token: string | null
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -55,7 +55,7 @@ const fetchActiveProjects = async (id: string | undefined, token: string | null 
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     );

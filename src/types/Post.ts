@@ -1,6 +1,7 @@
 import { User } from "./User";
 import { Category } from "./CategoryPost";
 import { Application } from "./Application";
+import { Job } from "./Job";
 export interface Post {
   id: string;
   posted_by: string;
@@ -17,4 +18,6 @@ export interface Post {
   user: User;
   applications: Application[];
   category_id: number;
+  status: 'open' | 'closed';
+  job: Job | null;
 }

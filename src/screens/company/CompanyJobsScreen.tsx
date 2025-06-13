@@ -100,7 +100,7 @@ const CompanyJobsScreen = () => {
               },
             ]}
           >
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+            {item.post.status.charAt(0).toUpperCase() + item?.status?.slice(1)}
           </Text>
         </View>
       </View>
