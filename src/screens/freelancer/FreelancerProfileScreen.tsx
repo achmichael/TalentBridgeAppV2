@@ -29,9 +29,9 @@ const fetchProfileData = async () => {
 
   return {
     id: "1",
-    name: "Alex Johnson",
+    name: "Michael",
     title: "Senior Mobile Developer",
-    avatar: "https://ui-avatars.com/api/?name=Alex+Johnson&background=random",
+    avatar: "https://images.unsplash.com/photo-1613909207039-6b173b755cc1?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZnJlZWxhbmNlcnxlbnwwfHwwfHx8MA%3D%3D",
     rating: 4.9,
     completedProjects: 32,
     hourlyRate: 35,

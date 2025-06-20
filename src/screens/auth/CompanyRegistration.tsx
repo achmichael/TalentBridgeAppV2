@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
+import { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -14,8 +14,8 @@ import {
   Platform,
   StatusBar,
   ImageBackground,
-} from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,23 +26,27 @@ import Animated, {
   SlideInRight,
   interpolate,
   Extrapolate,
-} from "react-native-reanimated"
-import { Picker } from "@react-native-picker/picker"
-import DateTimePicker from "@react-native-community/datetimepicker"
-import { LinearGradient } from "expo-linear-gradient"
-import { BlurView } from "expo-blur"
-import { MaterialIcons, FontAwesome5, Ionicons } from "@expo/vector-icons"
+} from "react-native-reanimated";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { MaterialIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { pickImageAsync } from "@/src/components/common/AutoHelper";
+import { baseUrl } from "@/src/config/baseUrl";
+import { useAuth } from "@/src/contexts/AuthContext";
+import { fetcher } from "@/src/components/common/AutoHelper";
 
-const { width, height } = Dimensions.get("window")
-const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient)
+const { width, height } = Dimensions.get("window");
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 interface SocialLink {
-  platform: string
-  url: string
+  platform: string;
+  url: string;
 }
 
 const CompanyRegistrationScreen = ({ navigation }: any) => {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -50,21 +54,25 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
     address: "",
     industry: "",
     website: "",
-    foundedAt: new Date(),
+    founded_at: new Date(),
     socialLinks: [] as SocialLink[],
-  })
+  });
 
-  const [newSocialLink, setNewSocialLink] = useState({ platform: "", url: "" })
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const scrollViewRef = useRef<ScrollView>(null)
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const { token } = useAuth();
+
+  const [newSocialLink, setNewSocialLink] = useState({ platform: "", url: "" });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Animation values
-  const progressWidth = useSharedValue(33.33)
-  const slideAnimation = useSharedValue(0)
-  const backgroundColorAnimation = useSharedValue(0)
-  const headerHeightAnimation = useSharedValue(height * 0.25)
+  const progressWidth = useSharedValue(33.33);
+  const slideAnimation = useSharedValue(0);
+  const backgroundColorAnimation = useSharedValue(0);
+  const headerHeightAnimation = useSharedValue(height * 0.25);
 
-  const totalSteps = 3
+  const totalSteps = 3;
   const industries = [
     "Technology",
     "Healthcare",
@@ -76,7 +84,7 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
     "Media",
     "Real Estate",
     "Transportation",
-  ]
+  ];
 
   const socialPlatforms = [
     { name: "LinkedIn", icon: "linkedin" },
@@ -85,132 +93,199 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
     { name: "Instagram", icon: "instagram" },
     { name: "YouTube", icon: "youtube" },
     { name: "Website", icon: "globe" },
-  ]
+  ];
 
   const bannerImages = [
     "https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80",
     "https://images.unsplash.com/photo-1497215842964-222b430dc094?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     "https://images.unsplash.com/photo-1552581234-26160f608093?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-  ]
+  ];
 
-  const stepTitles = ["Company Identity", "Business Details", "Online Presence"]
+  const stepTitles = [
+    "Company Identity",
+    "Business Details",
+    "Online Presence",
+  ];
 
   const stepDescriptions = [
     "Let's start with your company's basic information",
     "Tell us more about your business operations",
     "Connect your company's online profiles",
-  ]
+  ];
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
-  }
+      .replace(/(^-|-$)/g, "");
+  };
 
   const handleNameChange = (name: string) => {
-    handleInputChange("name", name)
+    handleInputChange("name", name);
     if (!formData.slug) {
-      handleInputChange("slug", generateSlug(name))
+      handleInputChange("slug", generateSlug(name));
     }
-  }
+  };
 
   const addSocialLink = () => {
     if (newSocialLink.platform && newSocialLink.url) {
       setFormData((prev) => ({
         ...prev,
         socialLinks: [...prev.socialLinks, newSocialLink],
-      }))
-      setNewSocialLink({ platform: "", url: "" })
+      }));
+      setNewSocialLink({ platform: "", url: "" });
     }
-  }
+  };
 
   const removeSocialLink = (index: number) => {
     setFormData((prev) => ({
       ...prev,
       socialLinks: prev.socialLinks.filter((_, i) => i !== index),
-    }))
-  }
+    }));
+  };
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1)
-      progressWidth.value = withTiming((currentStep + 1) * 33.33)
-      slideAnimation.value = withSpring(-(currentStep * width))
-      backgroundColorAnimation.value = withTiming(currentStep)
+      setCurrentStep(currentStep + 1);
+      progressWidth.value = withTiming((currentStep + 1) * 33.33);
+      slideAnimation.value = withSpring(-(currentStep * width));
+      backgroundColorAnimation.value = withTiming(currentStep);
 
       // Scroll to top when changing steps
       if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ y: 0, animated: true })
+        scrollViewRef.current.scrollTo({ y: 0, animated: true });
       }
     }
-  }
+  };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-      progressWidth.value = withTiming((currentStep - 1) * 33.33)
-      slideAnimation.value = withSpring(-((currentStep - 2) * width))
-      backgroundColorAnimation.value = withTiming(currentStep - 2)
+      setCurrentStep(currentStep - 1);
+      progressWidth.value = withTiming((currentStep - 1) * 33.33);
+      slideAnimation.value = withSpring(-((currentStep - 2) * width));
+      backgroundColorAnimation.value = withTiming(currentStep - 2);
 
       // Scroll to top when changing steps
       if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ y: 0, animated: true })
+        scrollViewRef.current.scrollTo({ y: 0, animated: true });
       }
     }
-  }
+  };
 
-  const handleSubmit = () => {
-    console.log("Company registration data:", formData)
-    Alert.alert("Registration Complete", "Your company profile has been successfully created!", [
-      {
-        text: "Go to Dashboard",
-        onPress: () => navigation.navigate("Dashboard"),
-        style: "default",
-      },
-    ])
-  }
+  const handleSubmit = async () => {
+    if (
+      !formData.name ||
+      !formData.slug ||
+      !formData.industry ||
+      !formData.address
+    ) {
+      Alert.alert(
+        "Missing Information",
+        "Please fill in all required fields before proceeding."
+      );
+      return;
+    }
+
+    try {
+      const companyData = {
+        ...formData,
+        slug: formData.slug
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, ""),
+        cover_image: imageUri,
+        social_links: JSON.stringify(formData.socialLinks),
+      };
+
+      const response = await fetcher(`${baseUrl}/companies`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(companyData),
+      });
+
+      if (response.error){
+        throw new Error(response.error);
+      }
+
+      Alert.alert(
+        "Success",
+        "Your company registration has been submitted successfully!",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.navigate("CompanyRoot");
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.log("error while submitting company registration", error);
+    }
+  };
 
   const progressStyle = useAnimatedStyle(() => ({
     width: `${progressWidth.value}%`,
-  }))
+  }));
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: slideAnimation.value }],
-  }))
+  }));
 
   const headerBackgroundStyle = useAnimatedStyle(() => {
-    const backgroundColor1 = interpolate(backgroundColorAnimation.value, [0, 1, 2], [0, 120, 240], Extrapolate.CLAMP)
+    const backgroundColor1 = interpolate(
+      backgroundColorAnimation.value,
+      [0, 1, 2],
+      [0, 120, 240],
+      Extrapolate.CLAMP
+    );
 
-    const backgroundColor2 = interpolate(backgroundColorAnimation.value, [0, 1, 2], [120, 240, 360], Extrapolate.CLAMP)
+    const backgroundColor2 = interpolate(
+      backgroundColorAnimation.value,
+      [0, 1, 2],
+      [120, 240, 360],
+      Extrapolate.CLAMP
+    );
 
     return {
       backgroundColor: `hsl(${backgroundColor1}, 70%, 65%)`,
       backgroundGradient: `linear-gradient(135deg, hsl(${backgroundColor1}, 70%, 65%), hsl(${backgroundColor2}, 70%, 65%))`,
-    }
-  })
+    };
+  });
 
   const headerHeightStyle = useAnimatedStyle(() => {
     return {
       height: headerHeightAnimation.value,
-    }
-  })
+    };
+  });
 
   const getSocialIcon = (platform: string) => {
-    const socialPlatform = socialPlatforms.find((p) => p.name === platform)
-    return socialPlatform ? socialPlatform.icon : "globe"
-  }
+    const socialPlatform = socialPlatforms.find((p) => p.name === platform);
+    return socialPlatform ? socialPlatform.icon : "globe";
+  };
 
   const renderStep1 = () => (
-    <Animated.View style={styles.stepContainer} entering={FadeIn.duration(500)} exiting={FadeOut.duration(300)}>
+    <Animated.View
+      style={styles.stepContainer}
+      entering={FadeIn.duration(500)}
+      exiting={FadeOut.duration(300)}
+    >
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Company Name *</Text>
         <View style={styles.inputWrapper}>
-          <MaterialIcons name="business" size={20} color="#6B7280" style={styles.inputIcon} />
+          <MaterialIcons
+            name="business"
+            size={20}
+            color="#6B7280"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             value={formData.name}
@@ -233,7 +308,9 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
             placeholderTextColor="#9CA3AF"
           />
         </View>
-        <Text style={styles.helperText}>This will be your company's unique URL</Text>
+        <Text style={styles.helperText}>
+          This will be your company's unique URL
+        </Text>
       </View>
 
       <View style={styles.inputContainer}>
@@ -250,7 +327,9 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
             textAlignVertical="top"
           />
         </View>
-        <Text style={styles.helperText}>This will appear on your company profile</Text>
+        <Text style={styles.helperText}>
+          This will appear on your company profile
+        </Text>
       </View>
 
       <View style={styles.tipContainer}>
@@ -260,19 +339,29 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
         <View style={styles.tipContent}>
           <Text style={styles.tipTitle}>Pro Tip</Text>
           <Text style={styles.tipText}>
-            A clear and concise company description helps attract the right candidates.
+            A clear and concise company description helps attract the right
+            candidates.
           </Text>
         </View>
       </View>
     </Animated.View>
-  )
+  );
 
   const renderStep2 = () => (
-    <Animated.View style={styles.stepContainer} entering={SlideInRight.duration(500)} exiting={FadeOut.duration(300)}>
+    <Animated.View
+      style={styles.stepContainer}
+      entering={SlideInRight.duration(500)}
+      exiting={FadeOut.duration(300)}
+    >
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Industry *</Text>
         <View style={styles.pickerWrapper}>
-          <MaterialIcons name="category" size={20} color="#6B7280" style={styles.inputIcon} />
+          <MaterialIcons
+            name="category"
+            size={20}
+            color="#6B7280"
+            style={styles.inputIcon}
+          />
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={formData.industry}
@@ -292,7 +381,12 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Company Address *</Text>
         <View style={styles.textAreaWrapper}>
-          <MaterialIcons name="location-on" size={20} color="#6B7280" style={styles.inputIcon} />
+          <MaterialIcons
+            name="location-on"
+            size={20}
+            color="#6B7280"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={[styles.input, styles.textArea]}
             value={formData.address}
@@ -309,7 +403,12 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Website</Text>
         <View style={styles.inputWrapper}>
-          <MaterialIcons name="language" size={20} color="#6B7280" style={styles.inputIcon} />
+          <MaterialIcons
+            name="language"
+            size={20}
+            color="#6B7280"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             value={formData.website}
@@ -323,57 +422,89 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Founded Date</Text>
-        <TouchableOpacity style={styles.dateButtonWrapper} onPress={() => setShowDatePicker(true)}>
-          <MaterialIcons name="event" size={20} color="#6B7280" style={styles.inputIcon} />
+        <TouchableOpacity
+          style={styles.dateButtonWrapper}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <MaterialIcons
+            name="event"
+            size={20}
+            color="#6B7280"
+            style={styles.inputIcon}
+          />
           <View style={styles.dateButton}>
-            <Text style={styles.dateButtonText}>{formData.foundedAt.toLocaleDateString()}</Text>
+            <Text style={styles.dateButtonText}>
+              {formData.founded_at.toLocaleDateString()}
+            </Text>
           </View>
         </TouchableOpacity>
         {showDatePicker && (
           <DateTimePicker
-            value={formData.foundedAt}
+            value={formData.founded_at}
             mode="date"
             display="default"
             onChange={(event: any, selectedDate: any) => {
-              setShowDatePicker(false)
+              setShowDatePicker(false);
               if (selectedDate) {
-                handleInputChange("foundedAt", selectedDate)
+                handleInputChange("founded_at", selectedDate);
               }
             }}
           />
         )}
       </View>
     </Animated.View>
-  )
+  );
 
   const renderStep3 = () => (
-    <Animated.View style={styles.stepContainer} entering={SlideInRight.duration(500)} exiting={FadeOut.duration(300)}>
+    <Animated.View
+      style={styles.stepContainer}
+      entering={SlideInRight.duration(500)}
+      exiting={FadeOut.duration(300)}
+    >
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Cover Image</Text>
-        <TouchableOpacity style={styles.uploadButtonContainer}>
+        <TouchableOpacity
+          onPress={async () => {
+            const imageUri = await pickImageAsync();
+            if (imageUri) {
+              setImageUri(imageUri);
+            }
+          }}
+          style={styles.uploadButtonContainer}
+        >
           <View style={styles.uploadButton}>
             <MaterialIcons name="cloud-upload" size={36} color="#6B7280" />
             <Text style={styles.uploadButtonText}>Upload Company Banner</Text>
-            <Text style={styles.uploadSubtext}>Recommended size: 1200 x 400px</Text>
+            <Text style={styles.uploadSubtext}>
+              Recommended size: 1200 x 400px
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Social Media Links</Text>
-        <Text style={styles.helperText}>Connect your company's social media profiles</Text>
+        <Text style={styles.helperText}>
+          Connect your company's social media profiles
+        </Text>
 
         <View style={styles.socialInputRow}>
           <View style={styles.socialPickerContainer}>
             <Picker
               selectedValue={newSocialLink.platform}
-              onValueChange={(value) => setNewSocialLink((prev) => ({ ...prev, platform: value }))}
+              onValueChange={(value) =>
+                setNewSocialLink((prev) => ({ ...prev, platform: value }))
+              }
               style={styles.socialPicker}
               dropdownIconColor="#6B7280"
             >
               <Picker.Item label="Platform" value="" />
               {socialPlatforms.map((platform) => (
-                <Picker.Item key={platform.name} label={platform.name} value={platform.name} />
+                <Picker.Item
+                  key={platform.name}
+                  label={platform.name}
+                  value={platform.name}
+                />
               ))}
             </Picker>
           </View>
@@ -382,7 +513,9 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
             <TextInput
               style={[styles.input, styles.socialUrlInput]}
               value={newSocialLink.url}
-              onChangeText={(text) => setNewSocialLink((prev) => ({ ...prev, url: text }))}
+              onChangeText={(text) =>
+                setNewSocialLink((prev) => ({ ...prev, url: text }))
+              }
               placeholder="https://..."
               placeholderTextColor="#9CA3AF"
             />
@@ -403,16 +536,25 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialIconContainer}>
-                    <FontAwesome5 name={getSocialIcon(link.platform)} size={16} color="#4F46E5" />
+                    <FontAwesome5
+                      name={getSocialIcon(link.platform)}
+                      size={16}
+                      color="#4F46E5"
+                    />
                   </View>
                   <View style={styles.socialLinkTextContainer}>
-                    <Text style={styles.socialLinkPlatform}>{link.platform}</Text>
+                    <Text style={styles.socialLinkPlatform}>
+                      {link.platform}
+                    </Text>
                     <Text style={styles.socialLinkUrl} numberOfLines={1}>
                       {link.url}
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.removeButton} onPress={() => removeSocialLink(index)}>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removeSocialLink(index)}
+                >
                   <MaterialIcons name="close" size={20} color="#EF4444" />
                 </TouchableOpacity>
               </Animated.View>
@@ -432,13 +574,14 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
             <MaterialIcons name="check-circle" size={32} color="#FFFFFF" />
             <Text style={styles.completionTitle}>Almost Done!</Text>
             <Text style={styles.completionText}>
-              Complete your profile to start connecting with top talent in your industry.
+              Complete your profile to start connecting with top talent in your
+              industry.
             </Text>
           </View>
         </LinearGradient>
       </View>
     </Animated.View>
-  )
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -455,7 +598,10 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
             style={styles.headerBackground}
             resizeMode="cover"
           >
-            <LinearGradient colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]} style={styles.headerGradient}>
+            <LinearGradient
+              colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
+              style={styles.headerGradient}
+            >
               <BlurView intensity={50} style={styles.headerBlur}>
                 <View style={styles.headerContent}>
                   <View style={styles.stepIndicator}>
@@ -463,8 +609,12 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
                       <Text style={styles.stepNumber}>{currentStep}</Text>
                     </View>
                     <View style={styles.stepTextContainer}>
-                      <Text style={styles.stepTitle}>{stepTitles[currentStep - 1]}</Text>
-                      <Text style={styles.stepDescription}>{stepDescriptions[currentStep - 1]}</Text>
+                      <Text style={styles.stepTitle}>
+                        {stepTitles[currentStep - 1]}
+                      </Text>
+                      <Text style={styles.stepDescription}>
+                        {stepDescriptions[currentStep - 1]}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -479,7 +629,9 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
             <Text style={styles.progressText}>
               Step {currentStep} of {totalSteps}
             </Text>
-            <Text style={styles.progressPercentage}>{Math.round((currentStep / totalSteps) * 100)}% Complete</Text>
+            <Text style={styles.progressPercentage}>
+              {Math.round((currentStep / totalSteps) * 100)}% Complete
+            </Text>
           </View>
           <View style={styles.progressBar}>
             <Animated.View style={[styles.progressFill, progressStyle]} />
@@ -503,7 +655,11 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
         {/* Navigation Buttons */}
         <View style={styles.navigationContainer}>
           <TouchableOpacity
-            style={[styles.navButton, styles.prevButton, currentStep === 1 && styles.disabledButton]}
+            style={[
+              styles.navButton,
+              styles.prevButton,
+              currentStep === 1 && styles.disabledButton,
+            ]}
             onPress={prevStep}
             disabled={currentStep === 1}
           >
@@ -513,25 +669,44 @@ const CompanyRegistrationScreen = ({ navigation }: any) => {
               color={currentStep === 1 ? "#9CA3AF" : "#374151"}
               style={styles.buttonIcon}
             />
-            <Text style={[styles.navButtonText, currentStep === 1 && styles.disabledButtonText]}>Previous</Text>
+            <Text
+              style={[
+                styles.navButtonText,
+                currentStep === 1 && styles.disabledButtonText,
+              ]}
+            >
+              Previous
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.navButton, styles.nextButton]}
             onPress={currentStep < totalSteps ? nextStep : handleSubmit}
           >
-            <Text style={styles.nextButtonText}>{currentStep < totalSteps ? "Next" : "Complete Registration"}</Text>
+            <Text style={styles.nextButtonText}>
+              {currentStep < totalSteps ? "Next" : "Complete Registration"}
+            </Text>
             {currentStep < totalSteps ? (
-              <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <MaterialIcons
+                name="arrow-forward"
+                size={20}
+                color="#FFFFFF"
+                style={styles.buttonIcon}
+              />
             ) : (
-              <MaterialIcons name="check" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <MaterialIcons
+                name="check"
+                size={20}
+                color="#FFFFFF"
+                style={styles.buttonIcon}
+              />
             )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -961,6 +1136,6 @@ const styles = StyleSheet.create({
   disabledButtonText: {
     color: "#9CA3AF",
   },
-})
+});
 
-export default CompanyRegistrationScreen
+export default CompanyRegistrationScreen;

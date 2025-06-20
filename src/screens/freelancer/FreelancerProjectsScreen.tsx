@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   Text,
@@ -16,96 +16,30 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../contexts/ThemeContext"
 import { useQuery } from "@tanstack/react-query"
 import withAuth from "@/src/hoc/withAuth"
+import { baseUrl } from "@/src/config/baseUrl"
+import { fetcher } from "@/src/components/common/AutoHelper"
+import { useAuth } from "@/src/contexts/AuthContext"
 
-// Mock data fetching function
-const fetchProjects = async (filter = "all") => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+const fetchProjects = async (id: string | undefined, token: string | null | undefined) => {
+  try {
+    const { data, error } = await fetcher(
+      `${baseUrl}/freelancers/active-jobs/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  const allProjects = [
-    {
-      id: "1",
-      title: "E-commerce Mobile App",
-      client: {
-        id: "c1",
-        name: "Tech Solutions Inc.",
-        avatar: "https://ui-avatars.com/api/?name=Tech+Solutions",
-      },
-      progress: 65,
-      dueDate: "2023-12-30",
-      payment: 3500,
-      status: "in progress",
-      description: "Building a full-featured e-commerce mobile app with payment integration and user authentication.",
-      startDate: "2023-10-15",
-    },
-    {
-      id: "2",
-      title: "Social Media Dashboard",
-      client: {
-        id: "c2",
-        name: "Digital Marketing Co.",
-        avatar: "https://ui-avatars.com/api/?name=Digital+Marketing",
-      },
-      progress: 40,
-      dueDate: "2024-01-15",
-      payment: 2800,
-      status: "in progress",
-      description: "Creating a dashboard to monitor and analyze social media performance across multiple platforms.",
-      startDate: "2023-11-01",
-    },
-    {
-      id: "3",
-      title: "Portfolio Website Redesign",
-      client: {
-        id: "c3",
-        name: "Jane Smith",
-        avatar: "https://ui-avatars.com/api/?name=Jane+Smith",
-      },
-      progress: 100,
-      dueDate: "2023-11-15",
-      payment: 1200,
-      status: "completed",
-      description: "Redesigned a personal portfolio website with modern UI/UX and responsive design.",
-      startDate: "2023-10-01",
-    },
-    {
-      id: "4",
-      title: "Fitness Tracking App",
-      client: {
-        id: "c4",
-        name: "Health & Wellness Co.",
-        avatar: "https://ui-avatars.com/api/?name=Health+Wellness",
-      },
-      progress: 100,
-      dueDate: "2023-10-30",
-      payment: 4000,
-      status: "completed",
-      description: "Developed a fitness tracking app with workout plans, progress tracking, and social features.",
-      startDate: "2023-08-15",
-    },
-    {
-      id: "5",
-      title: "Restaurant Ordering System",
-      client: {
-        id: "c5",
-        name: "Gourmet Dining",
-        avatar: "https://ui-avatars.com/api/?name=Gourmet+Dining",
-      },
-      progress: 0,
-      dueDate: "2024-02-28",
-      payment: 5000,
-      status: "not started",
-      description: "Creating an online ordering system for a restaurant chain with multiple locations.",
-      startDate: "2023-12-01",
-    },
-  ]
+    if (error) throw new Error(error);
 
-  // Apply status filter
-  if (filter !== "all") {
-    return allProjects.filter((project) => project.status === filter)
+    return data;
+  } catch (error) {
+    console.error("Error fetching company profile:", error);
+    throw error;
   }
-
-  return allProjects
 }
 
 const FreelancerProjectsScreen = () => {
@@ -113,14 +47,15 @@ const FreelancerProjectsScreen = () => {
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState("all")
   const [refreshing, setRefreshing] = useState(false)
-
+  const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
+  const { token, user } = useAuth();
   const {
     data: projects,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ["projects", activeFilter],
-    queryFn: () => fetchProjects(activeFilter),
+    queryFn: () => fetchProjects(user?.id, token),
   })
 
   const onRefresh = async () => {
@@ -131,16 +66,29 @@ const FreelancerProjectsScreen = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "in progress":
+      case "active":
         return theme.secondary
       case "completed":
-        return "#10B981" // Green
-      case "not started":
+        return "#10B981"
+      case "pending":
         return theme.primary
       default:
         return theme.text
     }
   }
+
+
+  useEffect(() => {
+    if (projects?.jobs) {
+      if (activeFilter === "all") {
+        setFilteredProjects(projects.jobs);
+      } else {
+        setFilteredProjects(
+          projects.jobs.filter((job: any) => job.status === activeFilter)
+        );
+      }
+    }
+  }, [activeFilter, projects?.jobs]);
 
   const renderProjectItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -151,10 +99,10 @@ const FreelancerProjectsScreen = () => {
     >
       <View style={styles.projectHeader}>
         <View style={styles.clientInfo}>
-          <Image source={{ uri: item.client.avatar }} style={styles.clientAvatar} />
+          <Image source={{ uri: item.client.profile_picture || 'https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg' }} style={styles.clientAvatar} />
           <View>
-            <Text style={[styles.projectTitle, { color: theme.text }]}>{item.title}</Text>
-            <Text style={[styles.clientName, { color: theme.text + "80" }]}>{item.client.name}</Text>
+            <Text style={[styles.projectTitle, { color: theme.text }]}>{item.contractable?.post?.title || 'N/A'}</Text>
+            <Text style={[styles.clientName, { color: theme.text + "80" }]}>{item.client.username.charAt(0).toUpperCase() + item.client.username.slice(1)}</Text>
           </View>
         </View>
         <View
@@ -179,10 +127,10 @@ const FreelancerProjectsScreen = () => {
       </View>
 
       <Text style={[styles.projectDescription, { color: theme.text + "80" }]} numberOfLines={2}>
-        {item.description}
+        {item.contractable.system.toUpperCase()}
       </Text>
 
-      {item.status !== "not started" && (
+      {/* {item.status !== "not started" && (
         <View style={styles.progressContainer}>
           <View style={styles.progressLabels}>
             <Text style={[styles.progressLabel, { color: theme.text }]}>Progress</Text>
@@ -194,7 +142,7 @@ const FreelancerProjectsScreen = () => {
                 },
               ]}
             >
-              {item.progress}%
+              {item.progress} %
             </Text>
           </View>
           <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
@@ -209,19 +157,19 @@ const FreelancerProjectsScreen = () => {
             />
           </View>
         </View>
-      )}
+      )} */}
 
       <View style={styles.projectFooter}>
         <View style={styles.projectDetail}>
           <Ionicons name="calendar-outline" size={16} color={theme.text} />
           <Text style={[styles.detailText, { color: theme.text }]}>
-            Due: {new Date(item.dueDate).toLocaleDateString()}
+            Due: {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
 
         <View style={styles.projectDetail}>
           <Ionicons name="cash-outline" size={16} color={theme.text} />
-          <Text style={[styles.detailText, { color: theme.text }]}>${item.payment}</Text>
+          <Text style={[styles.detailText, { color: theme.text }]}>Rp {item.contractable?.post?.price || 0}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -229,9 +177,9 @@ const FreelancerProjectsScreen = () => {
 
   const filterOptions = [
     { id: "all", label: "All Projects" },
-    { id: "in progress", label: "In Progress" },
+    { id: "active", label: "Active" },
     { id: "completed", label: "Completed" },
-    { id: "not started", label: "Not Started" },
+    { id: "terminated", label: "Terminated" },
   ]
 
   return (
@@ -276,9 +224,9 @@ const FreelancerProjectsScreen = () => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.secondary} />
         </View>
-      ) : projects && projects.length > 0 ? (
+      ) : filteredProjects && filteredProjects?.length > 0 ? (
         <FlatList
-          data={projects}
+          data={filteredProjects}
           renderItem={renderProjectItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.projectsList}

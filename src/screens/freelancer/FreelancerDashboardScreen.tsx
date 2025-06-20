@@ -25,7 +25,10 @@ import { baseUrl } from "@/src/config/baseUrl";
 type FreelancerDashboardScreenNavigationProp =
   StackNavigationProp<FreelancerStackParamList>;
 
-const fetchRecommendedJobs = async (id: string | undefined, token: string | null | undefined) => {
+const fetchRecommendedJobs = async (
+  id: string | undefined,
+  token: string | null | undefined
+) => {
   try {
     const { data, error } = await fetcher(
       `${baseUrl}/freelancers/posts/${id}`,
@@ -47,7 +50,10 @@ const fetchRecommendedJobs = async (id: string | undefined, token: string | null
   }
 };
 
-const fetchActiveProjects = async (id: string | undefined, token: string | null | undefined) => {
+const fetchActiveProjects = async (
+  id: string | undefined,
+  token: string | null | undefined
+) => {
   try {
     const { data, error } = await fetcher(
       `${baseUrl}/freelancers/active-jobs/${id}`,
@@ -118,7 +124,9 @@ const FreelancerDashboardScreen = () => {
       <View style={styles.header}>
         <View>
           <Text style={[styles.greeting, { color: theme.text }]}>
-            Hello, {user?.username && user.username.charAt(0).toUpperCase() + user.username.slice(1)}
+            Hello,{" "}
+            {user?.username &&
+              user.username.charAt(0).toUpperCase() + user.username.slice(1)}
           </Text>
           <Text style={[styles.subGreeting, { color: theme.text + "80" }]}>
             Find your next opportunity
@@ -136,12 +144,17 @@ const FreelancerDashboardScreen = () => {
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.secondary }]}>
           <Text style={styles.statsNumber}>
-            {Number(520).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+            {Number(projects.total_income) !== 0
+              ? Number(projects.total_income).toLocaleString("id-ID", {
+                  style: "currency",
+                  currency: "IDR",
+                })
+              : "Rp 0"}
           </Text>
           <Text style={styles.statsLabel}>Earnings</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.primary }]}>
-          <Text style={styles.statsNumber}>{projects.length || 0}</Text>
+          <Text style={styles.statsNumber}>{projects.jobs.length || 0}</Text>
           <Text style={styles.statsLabel}>Active Projects</Text>
         </View>
         <View style={[styles.statsCard, { backgroundColor: theme.accent }]}>
@@ -155,17 +168,20 @@ const FreelancerDashboardScreen = () => {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Active Projects
           </Text>
-          <TouchableOpacity onPress={() => 
-            // @ts-ignore
-            navigation.navigate("Projects")}>
+          <TouchableOpacity
+            onPress={() =>
+              // @ts-ignore
+              navigation.navigate("Projects")
+            }
+          >
             <Text style={[styles.seeAll, { color: theme.secondary }]}>
               See All
             </Text>
           </TouchableOpacity>
         </View>
 
-        {projects && projects.length > 0 ? (
-          projects.map((project: any) => (
+        {projects?.jobs && projects?.jobs?.length > 0 ? (
+          projects?.jobs?.map((project: any) => (
             <View
               key={project.id}
               style={[styles.projectCard, { backgroundColor: theme.card }]}
@@ -173,17 +189,29 @@ const FreelancerDashboardScreen = () => {
               <View style={styles.projectHeader}>
                 <View style={styles.clientInfo}>
                   <Image
-                    source={{ uri: project.client?.profile_picture }}
+                    source={{
+                      uri:
+                        project.client?.profile_picture ||
+                        "https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg",
+                    }}
                     style={styles.clientAvatar}
                   />
                   <View>
                     <Text style={[styles.projectTitle, { color: theme.text }]}>
-                      {project.title}
-                    </Text>
+                      {project.contractable?.post?.title
+                        ? project.contractable?.post.title?.charAt(0).toUpperCase() +
+                          project.contractable?.post.title?.slice(1)
+                        : project.contractable?.post?.title
+                            .charAt(0)
+                            .toUpperCase() +
+                            project.contractable?.post?.title.slice(1) ||
+                          "Not Available Title"}
+                    </Text> 
                     <Text
                       style={[styles.clientName, { color: theme.text + "80" }]}
                     >
-                      {project.client.username}
+                      {project.client.username.charAt(0).toUpperCase() +
+                        project.client.username.slice(1)}
                     </Text>
                   </View>
                 </View>
@@ -200,38 +228,6 @@ const FreelancerDashboardScreen = () => {
               </View>
 
               <View style={styles.projectDetails}>
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressLabels}>
-                    <Text style={[styles.progressLabel, { color: theme.text }]}>
-                      Progress
-                    </Text>
-                    <Text
-                      style={[
-                        styles.progressPercentage,
-                        { color: theme.secondary },
-                      ]}
-                    >
-                      {project.progress}%
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.progressBar,
-                      { backgroundColor: theme.border },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.progressFill,
-                        {
-                          backgroundColor: theme.secondary,
-                          width: `${project.progress}%`,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-
                 <View style={styles.projectFooter}>
                   <View style={styles.projectDetail}>
                     <Ionicons
@@ -240,7 +236,7 @@ const FreelancerDashboardScreen = () => {
                       color={theme.text}
                     />
                     <Text style={[styles.detailText, { color: theme.text }]}>
-                      Due: {new Date(project.dueDate).toLocaleDateString()}
+                      Due: {new Date(project.created_at).toLocaleDateString()}
                     </Text>
                   </View>
 
@@ -251,7 +247,7 @@ const FreelancerDashboardScreen = () => {
                       color={theme.text}
                     />
                     <Text style={[styles.detailText, { color: theme.text }]}>
-                      ${project.payment}
+                      Rp {project.contractable?.price || 0}
                     </Text>
                   </View>
                 </View>
@@ -288,9 +284,12 @@ const FreelancerDashboardScreen = () => {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Recommended Jobs
           </Text>
-          <TouchableOpacity onPress={() => 
-            // @ts-ignore
-            navigation.navigate("Jobs")}>
+          <TouchableOpacity
+            onPress={() =>
+              // @ts-ignore
+              navigation.navigate("Jobs")
+            }
+          >
             <Text style={[styles.seeAll, { color: theme.secondary }]}>
               See All
             </Text>
@@ -312,17 +311,25 @@ const FreelancerDashboardScreen = () => {
                   {job.title}
                 </Text>
                 <Text style={[styles.jobBudget, { color: theme.secondary }]}>
-                  {job.price?.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                  {job.price?.toLocaleString("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                  })}
                 </Text>
               </View>
 
               <View style={styles.clientRow}>
                 <Image
-                  source={{ uri: job.client?.profile_picture || 'https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg' }}
+                  source={{
+                    uri:
+                      job.client?.profile_picture ||
+                      "https://i.pinimg.com/736x/ed/1f/41/ed1f41959e7e9aa7fb0a18b76c6c2755.jpg",
+                  }}
                   style={styles.clientAvatar}
                 />
                 <Text style={[styles.clientName, { color: theme.text + "80" }]}>
-                  {job?.user?.username?.charAt(0).toUpperCase() + job?.user?.username?.slice(1)}
+                  {job?.user?.username?.charAt(0).toUpperCase() +
+                    job?.user?.username?.slice(1)}
                 </Text>
               </View>
 
@@ -334,9 +341,10 @@ const FreelancerDashboardScreen = () => {
               </Text>
 
               <View style={styles.skillsContainer}>
-                {(typeof job?.required_skills === 'string' 
-                  ? JSON.parse(job.required_skills || '[]')
-                  : job?.required_skills || [])?.map((skill: any, index: number) => (
+                {(typeof job?.required_skills === "string"
+                  ? JSON.parse(job.required_skills || "[]")
+                  : job?.required_skills || []
+                )?.map((skill: any, index: number) => (
                   <View
                     key={index}
                     style={[
@@ -367,8 +375,22 @@ const FreelancerDashboardScreen = () => {
                   </Text>
                 </View>
 
-                <View style={[styles.ratingContainer, { backgroundColor: job.status === 'open' ? theme.secondary + "50" : theme.primary + "20" }]}>
-                  <Ionicons name="pricetags" size={13} color={theme.secondary + "90"} />
+                <View
+                  style={[
+                    styles.ratingContainer,
+                    {
+                      backgroundColor:
+                        job.status === "open"
+                          ? theme.secondary + "50"
+                          : theme.primary + "20",
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="pricetags"
+                    size={13}
+                    color={theme.secondary + "90"}
+                  />
                   <Text style={[styles.ratingText, { color: theme.text }]}>
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                   </Text>

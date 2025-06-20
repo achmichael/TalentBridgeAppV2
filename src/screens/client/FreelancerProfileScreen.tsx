@@ -10,20 +10,21 @@ import { useTheme } from "../../contexts/ThemeContext"
 import type { ClientStackParamList } from "../../navigation/ClientNavigator"
 import { useQuery } from "@tanstack/react-query"
 import withAuth from "@/src/hoc/withAuth"
+import { baseUrl } from "@/src/config/baseUrl"
+import { fetcher } from "@/src/components/common/AutoHelper"
 
 type FreelancerProfileScreenRouteProp = RouteProp<ClientStackParamList, "FreelancerProfile">
 type FreelancerProfileScreenNavigationProp = StackNavigationProp<ClientStackParamList>
 
-// Mock data fetching function
+
 const fetchFreelancerProfile = async (freelancerId: string) => {
-  // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   return {
     id: freelancerId,
     name: "John Doe",
     title: "Senior Full Stack Developer",
-    avatar: "https://ui-avatars.com/api/?name=John+Doe",
+    avatar: "https://images.unsplash.com/photo-1613909207039-6b173b755cc1?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZnJlZWxhbmNlcnxlbnwwfHwwfHx8MA%3D%3D",
     rating: 4.8,
     hourlyRate: 25,
     location: "San Francisco, USA",
